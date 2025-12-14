@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz Battle</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      text-align: center;
+      padding: 20px;
+    }
+    .box {
+      background: #020617;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 520px;
+      margin: auto;
+      box-shadow: 0 0 15px rgba(0,0,0,.6);
+    }
+    h2 { margin-bottom: 10px; }
+    .option {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 12px;
+      background: #1e293b;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .option:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    #timer {
+      font-size: 18px;
+      margin: 10px 0;
+      color: #38bdf8;
+    }
+    #result {
+      margin-top: 10px;
+      font-size: 18px;
+      min-height: 26px;
+    }
+    #opponent {
+      color: orange;
+      min-height: 22px;
+      margin-top: 5px;
+    }
+    #scores {
+      margin-top: 15px;
+      font-size: 16px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h2>Quiz Battle</h2>
+
+  <div>Room Code: <b id="room"></b></div>
+  <div>Your role: <b id="player"></b></div>
+
+  <hr>
+
+  <div id="question">Waiting for players...</div>
+  <div id="timer"></div>
+
+  <button class="option" onclick="sendAnswer('A')" id="btnA"></button>
+  <button class="option" onclick="sendAnswer('B')" id="btnB"></button>
+  <button class="option" onclick="sendAnswer('C')" id="btnC"></button>
+  <button class="option" onclick="sendAnswer('D')" id="btnD"></button>
+
+  <div id="opponent"></div>
+  <div id="result"></div>
+  <div id="scores"></div>
+</div>
+
+<script>
+/* ================= STATE ================= */
+const roomCode = window.location.pathname.split("/").filter(Boolean).pop();
+document.getElementById("room").innerText = roomCode;
+
+let socket = null;
+let myPlayer = null;
+let currentQuestionNum = 0;
+let timerInterval = null;
+let answered = false;
+
+/* ================= WS CONNECT ================= */
+function connect() {
+  socket = new WebSocket(`ws://${window.location.host}/ws/quiz/${roomCode}/`);
+
+  socket.onopen = () => {
+    console.log("✅ WebSocket connected");
+  };
+
+  socket.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    console.log("⬇️ WS event:", data);
+
+    switch (data.type) {
+
+      case "joined":
+        myPlayer = data.player_label;
+        document.getElementById("player").innerText = myPlayer;
+        break;
+
+      case "player_joined":
+        break;
+
+      case "start":
+        startQuestion(data);
+        break;
+
+      case "player_answered":
+        if (data.player_label !== myPlayer) {
+          document.getElementById("opponent").innerText =
+            "⚡ Đối thủ đã trả lời";
+        }
+        break;
+
+      case "result":
+        if (data.question_num !== currentQuestionNum) {
+          console.warn("⛔ Ignore old result", data.question_num);
+          return;
+        }
+        showResult(data);
+        break;
+    }
+  };
+
+  socket.onclose = () => {
+    console.warn("❌ WebSocket closed");
+  };
+}
+
+/* ================= QUESTION ================= */
+function startQuestion(data) {
+  currentQuestionNum = data.question_num;
+  answered = false;
+
+  clearInterval(timerInterval);
+
+  document.getElementById("question").innerText =
+    `Q${data.question_num}: ${data.question.text}`;
+
+  setBtn("A", data.question.a);
+  setBtn("B", data.question.b);
+  setBtn("C", data.question.c);
+  setBtn("D", data.question.d);
+
+  document.getElementById("result").innerText = "";
+  document.getElementById("opponent").innerText = "";
+  document.getElementById("scores").style.display = "none";
+
+  enableButtons(true);
+  startTimer(data.timer);
+}
+
+/* ================= TIMER ================= */
+function startTimer(seconds) {
+  let time = seconds;
+  document.getElementById("timer").innerText = `⏱ ${time}s`;
+
+  timerInterval = setInterval(() => {
+    time--;
+    document.getElementById("timer").innerText = `⏱ ${time}s`;
+    if (time <= 0) {
+      clearInterval(timerInterval);
+      enableButtons(false);
+    }
+  }, 1000);
+}
+
+/* ================= ANSWER ================= */
+function sendAnswer(letter) {
+  if (answered) return;
+  answered = true;
+
+  enableButtons(false);
+
+  socket.send(JSON.stringify({
+    type: "answer",
+    answer: letter
+  }));
+
+  document.getElementById("result").innerText = "⏳ Chờ đối thủ...";
+}
+
+function showResult(data) {
+  clearInterval(timerInterval);
+
+  document.getElementById("result").innerText = data.message;
+  document.getElementById("scores").innerText =
+    `Scores → Player1: ${data.scores.player1} | Player2: ${data.scores.player2}`;
+
+  document.getElementById("scores").style.display = "block";
+  enableButtons(false);
+}
+
+/* ================= UTILS ================= */
+function setBtn(letter, text) {
+  const btn = document.getElementById("btn" + letter);
+  btn.innerText = `${letter}. ${text}`;
+}
+
+function enableButtons(flag) {
+  ["A","B","C","D"].forEach(l => {
+    document.getElementById("btn"+l).disabled = !flag;
+  });
+}
+
+/* ================= START ================= */
+connect();
+</script>
+
+</body>
+</html>
