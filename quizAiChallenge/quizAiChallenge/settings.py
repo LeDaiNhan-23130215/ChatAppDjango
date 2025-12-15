@@ -34,7 +34,8 @@ INSTALLED_APPS = [
     'daphne',
     'channels',
     'quiz',
-
+    'quiz_ai_battle',
+    
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

@@ -5,7 +5,6 @@ Run with: python manage.py shell < add_questions.py
 """
 
 from quiz.models import Question
-
 questions_data = [
     {
         "text": "What is the capital of France?",
