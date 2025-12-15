@@ -11,6 +11,11 @@ urlpatterns = [
         name='play_ground'
     ),
     path(
+        "result/<int:match_id>/<int:round_index>/",
+        views.round_result,
+        name="round_result"
+    ),
+    path(
     'summary/<int:match_id>/',
     views.summary,
     name='summary'

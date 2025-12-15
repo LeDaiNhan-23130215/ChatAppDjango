@@ -1,20 +1,29 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Summary</title>
-</head>
-<body>
-    <h1>Match Summary</h1>
+{% load static %}
+<link rel="stylesheet" href="{% static 'quiz_ai_battle/style.css' %}">
 
-    <ul>
+<div class="container">
+    <h2>Match Summary</h2>
+
+    <div class="score-box">
+        <span>You: {{ match.user_score }}</span>
+        <span>AI: {{ match.ai_score }}</span>
+    </div>
+
+    <table>
+        <tr>
+            <th>Question</th>
+            <th>Your Answer</th>
+            <th>AI Answer</th>
+            <th>Correct</th>
+        </tr>
+
         {% for r in rounds %}
-            <li>
-                {{ r.question.text }} |
-                User: {{ r.user_answer }} |
-                AI: {{ r.ai_answer }}
-            </li>
+        <tr>
+            <td>{{ r.question.content }}</td>
+            <td>{{ r.user_answer }}</td>
+            <td>{{ r.ai_answer }}</td>
+            <td>{{ r.question.correct_answer }}</td>
+        </tr>
         {% endfor %}
-    </ul>
-</body>
-</html>
+    </table>
+</div>

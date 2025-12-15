@@ -1,11 +1,44 @@
-<h2>Round {{ round_index|add:1 }} / {{ total_rounds }}</h2>
+{% load static %}
+<link rel="stylesheet" href="{% static 'quiz_ai_battle/style.css' %}">
 
-<p>{{ round.question.content }}</p>
+<div class="container">
+    <h2>Round {{ round_index|add:1 }} / {{ total_rounds }}</h2>
 
-<form method="post">
-    {% csrf_token %}
-    <button type="submit">A. {{ round.question.option_a }}</button><br>
-    <button type="submit">B. {{ round.question.option_b }}</button><br>
-    <button type="submit">C. {{ round.question.option_c }}</button><br>
-    <button type="submit">D. {{ round.question.option_d }}</button><br>
-</form>
+    <form method="post">
+        {% csrf_token %}
+
+        <p class="question">
+            <strong>{{ round.question.content }}</strong>
+        </p>
+
+        <div class="options">
+            <label>
+                <input type="radio" name="answer" value="A" required>
+                {{ round.question.option_a }}
+            </label>
+
+            <label>
+                <input type="radio" name="answer" value="B">
+                {{ round.question.option_b }}
+            </label>
+
+            <label>
+                <input type="radio" name="answer" value="C">
+                {{ round.question.option_c }}
+            </label>
+
+            <label>
+                <input type="radio" name="answer" value="D">
+                {{ round.question.option_d }}
+            </label>
+        </div>
+
+        <br>
+        <button type="submit">Submit</button>
+    </form>
+
+    <div class="score-box">
+        <span>You: {{ match.user_score }}</span>
+        <span>AI: {{ match.ai_score }}</span>
+    </div>
+</div>

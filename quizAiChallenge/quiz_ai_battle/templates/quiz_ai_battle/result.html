@@ -1,0 +1,44 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'quiz_ai_battle/style.css' %}">
+
+<div class="container">
+    <h2>Round {{ round_index|add:1 }} Result</h2>
+
+    <p class="question">
+        <strong>{{ round.question.content }}</strong>
+    </p>
+
+    <div class="result-box">
+        <p>
+            You answered:
+            <b>{{ round.user_answer }}</b>
+            {% if round.user_correct %}
+                <span class="correct">✔ Correct</span>
+            {% else %}
+                <span class="wrong">✖ Wrong</span>
+            {% endif %}
+        </p>
+
+        <p>
+            AI answered:
+            <b>{{ round.ai_answer }}</b>
+            {% if round.ai_correct %}
+                <span class="correct">✔ Correct</span>
+            {% else %}
+                <span class="wrong">✖ Wrong</span>
+            {% endif %}
+        </p>
+    </div>
+
+    <div class="score-box">
+        <span>You: {{ match.user_score }}</span>
+        <span>AI: {{ match.ai_score }}</span>
+    </div>
+
+    <br>
+
+    <form method="get"
+          action="{% url 'quiz_ai_battle:play_ground' match.id round_index|add:1 %}">
+        <button type="submit">Next Question →</button>
+    </form>
+</div>
