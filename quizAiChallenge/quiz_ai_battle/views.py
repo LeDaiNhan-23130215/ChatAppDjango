@@ -3,27 +3,32 @@ from django.shortcuts import redirect
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Match, Round, Question
-from .ai import get_ai_answer
+from .ai_model import get_ai
 # Create your views here.
 # @login_required
 def start_match(request):
-    user = request.user if request.user.is_authenticated else None
+    if request.method == "POST":
+        ai_mode = request.POST.get("ai_mode", "random")
 
-    match = Match.objects.create(user = user)
-
-    questions = Question.objects.all()[:5]
-
-    for q in questions:
-        Round.objects.create(
-            match = match,
-            question = q
+        match = Match.objects.create(
+            user=request.user if request.user.is_authenticated else None,
+            ai_mode=ai_mode
         )
 
-    return redirect(
-        'quiz_ai_battle:play_ground',
-        match_id = match.id,
-        round_index = 0
-    )
+        questions = Question.objects.all()[:5]
+
+        for q in questions:
+            Round.objects.create(
+                match = match,
+                question = q
+            )
+
+        return redirect(
+            'quiz_ai_battle:play_ground',
+            match_id = match.id,
+            round_index = 0
+        )
+    return render(request, "quiz_ai_battle/start.html")
 
 # @login_required
 def play_ground(request, match_id, round_index):
@@ -53,7 +58,8 @@ def play_ground(request, match_id, round_index):
         if current_round.user_correct:
             match.user_score += 1
 
-        aiAns = get_ai_answer(current_round.question)
+        ai = get_ai(match.ai_mode)
+        aiAns = ai.get_answer(current_round.question)
         current_round.ai_answer = aiAns
         current_round.ai_correct = (
             aiAns == current_round.question.correct_answer

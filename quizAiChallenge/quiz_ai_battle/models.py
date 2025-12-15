@@ -24,11 +24,22 @@ class Question(models.Model):
         return self.content[:50]
     
 class Match(models.Model):
+    AI_MODES = [
+        ("random", "Random AI"),
+        ("gpt", "GPT AI"),
+    ]
+
     user = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True
+    )
+
+    ai_mode = models.CharField(
+        max_length=10,
+        choices=AI_MODES,
+        default="random"
     )
 
     user_score = models.IntegerField(default=0)
