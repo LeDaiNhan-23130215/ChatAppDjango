@@ -33,7 +33,7 @@ Respond with ONLY one letter: A, B, C, or D.
                 {"role": "user", "content": prompt},
             ],
             temperature=0.7,
-        )
+        )  
 
         answer = response.choices[0].message.content.strip().upper()
 
