@@ -1,0 +1,228 @@
+/* Thiết lập cơ bản (Reset/Box Sizing) */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+}
+
+body {
+    background-color: #f4f7f9;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Thanh Điều Hướng (Header) */
+#main-header {
+    height: 10vh;
+    background-color: #2c3e50;
+    /* Màu nền đậm */
+    color: white;
+    padding: 15px 5%;
+    display: flex;
+    /* Sử dụng Flexbox để căn chỉnh */
+    justify-content: center;
+    align-items: center;
+    position: sticky;
+    /* Cố định thanh navigation */
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-right: auto;
+}
+
+.user-controls a {
+    text-decoration: none
+}
+
+/* Menu Chính */
+.main-nav {
+    margin-right: auto;
+}
+
+.main-nav ul {
+    list-style: none;
+    display: flex;
+}
+
+.main-nav ul li {
+    margin: 0 15px;
+}
+
+.main-nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.main-nav ul li a:hover {
+    color: #3498db;
+    /* Hiệu ứng hover */
+}
+
+/* Khu vực Điều khiển Người dùng */
+#login-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+#login-btn:hover {
+    background-color: #c0392b;
+}
+
+/* Khu vực Chung */
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 30px auto;
+    display: flex;
+    gap: 20px;
+}
+
+.progress-bar-container {
+    background-color: rgb(204, 204, 204);
+    border-radius: 20px;
+    width: 60%;
+}
+
+.progress-bar-container div {
+    width: 70%;
+    background-color: rgb(13, 221, 13);
+    border-radius: 20px;
+    padding: 2px;
+}
+.progress-bar-container div p{
+   text-align: right;
+   font-size: 10px;
+   color: white;
+}
+
+/* Hero Section (Khu vực Chính Trang Chủ) */
+.hero-section {
+    margin: 10px;
+    border-radius: 10px;
+    background-color: #3498db;
+    /* Màu nổi bật */
+    color: white;
+    padding: 80px 5%;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.hero-section h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.cta-button {
+    display: inline-block;
+    background-color: #2ecc71;
+    /* Nút hành động nổi bật */
+    color: white;
+    text-decoration: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-top: 20px;
+    transition: background-color 0.3s;
+}
+
+.cta-button:hover {
+    background-color: #27ae60;
+}
+
+/* Card (Thẻ thông tin) */
+.card {
+    background-color: #e0e0e0;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    flex: 1;
+    /* Chia đều không gian trong Flexbox */
+}
+
+/* Khu vực Tiến độ và Leaderboard */
+#dashboard-summary .progress-tracking {
+    flex: 2;
+    /* Progress tracking có thể rộng hơn */
+}
+
+#dashboard-summary .leaderboard-snippet {
+    flex: 1;
+}
+
+/* Thêm style cho phần Mini Games */
+#mini-games-preview{
+    display: block;
+}
+#mini-games-preview h2 {
+    margin-bottom: 20px;
+    text-align: center; /* Căn giữa tiêu đề */
+    width: 100%;
+}
+
+.mini-games-grid {
+    display: grid;
+    /* Chia làm 4 cột bằng nhau, có khoảng cách 20px */
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 20px; 
+    width: 100%;
+    margin-top: 10px;
+}
+
+.game-card {
+    /* Kế thừa style của card thông thường */
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    
+    /* Style riêng cho link */
+    text-decoration: none;
+    color: #333;
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.game-card:hover {
+    transform: translateY(-5px); /* Hiệu ứng nhấc lên khi hover */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.game-icon {
+    font-size: 3em;
+    margin-bottom: 10px;
+}
+
+.game-card h3 {
+    font-size: 1.2em;
+    margin-bottom: 5px;
+    color: #3498db; /* Sử dụng màu chủ đạo cho tiêu đề game */
+}
+
+.game-card p {
+    font-size: 0.9em;
+    color: #7f8c8d; /* Màu chữ phụ */
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 20px;
+    background-color: #333;
+    color: #ccc;
+    margin-top: 40px;
+}

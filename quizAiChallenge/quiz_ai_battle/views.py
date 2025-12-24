@@ -1,73 +1,80 @@
-from django.shortcuts import render
-from django.shortcuts import redirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Match, Round, Question
 from .ai_model import get_ai
-# Create your views here.
-# @login_required
+
+# =========================
+# Bắt đầu trận đấu
+# =========================
+@login_required
 def start_match(request):
     if request.method == "POST":
         ai_mode = request.POST.get("ai_mode", "random")
 
+        # Tạo match mới
         match = Match.objects.create(
-            user=request.user if request.user.is_authenticated else None,
+            user=request.user,
             ai_mode=ai_mode
         )
 
+        # Lấy 5 câu hỏi đầu tiên (hoặc random nếu muốn)
         questions = Question.objects.all()[:5]
 
         for q in questions:
             Round.objects.create(
-                match = match,
-                question = q
+                match=match,
+                question=q
             )
 
+        # Redirect tới round đầu tiên
         return redirect(
             'quiz_ai_battle:play_ground',
-            match_id = match.id,
-            round_index = 0
+            match_id=match.id,
+            round_index=0
         )
+
     return render(request, "quiz_ai_battle/start.html")
 
-# @login_required
-def play_ground(request, match_id, round_index):
-    match = get_object_or_404(Match, id=match_id)
-    rounds = Round.objects.filter(match = match).order_by('id')
 
+# =========================
+# Chơi từng round
+# =========================
+@login_required
+def play_ground(request, match_id, round_index):
+    match = get_object_or_404(Match, id=match_id, user=request.user)
+    rounds = Round.objects.filter(match=match).order_by('id')
+
+    # Nếu round_index vượt quá số round → summary
     if round_index >= rounds.count():
-        return redirect('quiz_ai_battle:summary', match_id = match.id)
+        return redirect('quiz_ai_battle:summary', match_id=match.id)
     
     current_round = rounds[round_index]
 
+    # Nếu đã trả lời → redirect
     if request.method == "POST":
-
         if current_round.user_answer:
             return redirect(
                 "quiz_ai_battle:play_ground",
-                match_id = match.id,
-                round_index = round_index
+                match_id=match.id,
+                round_index=round_index
             )
-        
-        userAns = request.POST.get("answer")
-        current_round.user_answer = userAns
-        current_round.user_correct = (
-            userAns == current_round.question.correct_answer
-        )
 
+        # Lấy answer user
+        user_ans = request.POST.get("answer")
+        current_round.user_answer = user_ans
+        current_round.user_correct = (user_ans == current_round.question.correct_answer)
         if current_round.user_correct:
             match.user_score += 1
 
+        # AI trả lời
         ai = get_ai(match.ai_mode)
-        aiAns = ai.get_answer(current_round.question)
-        current_round.ai_answer = aiAns
-        current_round.ai_correct = (
-            aiAns == current_round.question.correct_answer
-        )
-
+        ai_ans = ai.get_answer(current_round.question)
+        current_round.ai_answer = ai_ans
+        current_round.ai_correct = (ai_ans == current_round.question.correct_answer)
         if current_round.ai_correct:
             match.ai_score += 1
 
+        # Lưu dữ liệu
         current_round.save()
         match.save()
 
@@ -84,24 +91,21 @@ def play_ground(request, match_id, round_index):
         'total_rounds': rounds.count()
     })
 
-def summary(request, match_id):
-    match = get_object_or_404(Match, id=match_id)
-    rounds = Round.objects.filter(match=match)
 
-    return render(request, 'quiz_ai_battle/summary.html', {
-        'match': match,
-        'rounds': rounds
-    })
-
+# =========================
+# Kết quả 1 round
+# =========================
+@login_required
 def round_result(request, match_id, round_index):
-    match = get_object_or_404(Match, id=match_id)
-    rounds = Round.objects.filter(match=match).order_by("id")
+    match = get_object_or_404(Match, id=match_id, user=request.user)
+    rounds = Round.objects.filter(match=match).order_by('id')
 
     if round_index >= rounds.count():
         return redirect("quiz_ai_battle:summary", match_id=match.id)
 
     current_round = rounds[round_index]
 
+    # Nếu chưa trả lời → quay lại play
     if not current_round.user_answer:
         return redirect(
             "quiz_ai_battle:play_ground",
@@ -114,4 +118,18 @@ def round_result(request, match_id, round_index):
         "round": current_round,
         "round_index": round_index,
         "total_rounds": rounds.count()
+    })
+
+
+# =========================
+# Summary trận đấu
+# =========================
+@login_required
+def summary(request, match_id):
+    match = get_object_or_404(Match, id=match_id, user=request.user)
+    rounds = Round.objects.filter(match=match)
+
+    return render(request, 'quiz_ai_battle/summary.html', {
+        'match': match,
+        'rounds': rounds
     })

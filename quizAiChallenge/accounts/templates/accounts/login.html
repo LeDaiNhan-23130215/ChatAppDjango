@@ -1,0 +1,63 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+
+<body>
+    <header id="main-header">
+        <div class="logo">Tên Logo</div>
+        <nav class="main-nav">
+            <ul>
+                <li><a href="{% url 'homepage' %}">Trang Chủ</a></li>
+                <li><a href="{% url 'quiz_ai_battle:start_match' %}">AI Challenge Mode</a></li>
+                <li><a href="{% url 'quiz_home' %}">User Challenge Mode</a></li>
+                <li><a href="#mini-games">Mini Games</a></li>
+                <li><a href="#leaderboard">Leaderboard</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="main-container" id="main-container">
+
+        <form method="post" class="login-form">
+            {% csrf_token %}
+            <h2>Đăng Nhập</h2>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <p class="error">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+
+            <div class="field-input">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username"
+                    placeholder="Nhập username" required>
+            </div>
+
+            <div class="field-input">
+                <label for="password">Mật khẩu</label>
+                <input type="password" id="password" name="password"
+                    placeholder="Nhập mật khẩu" required>
+            </div>
+
+            <button type="submit" class="login-button">Đăng nhập</button>
+
+            <div class="login-register">
+                Bạn chưa có tài khoản?
+                <a href="{% url 'register' %}">Đăng ký</a>
+            </div>
+        </form>
+
+    </div>
+</body>
+<script>
+
+</script>
+
+</html>
