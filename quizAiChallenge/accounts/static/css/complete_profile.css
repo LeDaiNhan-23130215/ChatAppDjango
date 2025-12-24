@@ -1,0 +1,94 @@
+/* ===== Container chính ===== */
+.container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 30px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ===== Tiêu đề ===== */
+.container h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* ===== Mô tả ===== */
+.container p {
+    text-align: center;
+    color: #555;
+    margin-bottom: 30px;
+}
+
+/* ===== Form ===== */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== Nhóm input ===== */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+
+/* Label */
+.form-group label {
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #444;
+}
+
+/* Input, textarea, select */
+.form-group input,
+.form-group textarea,
+.form-group select {
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    transition: 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0,123,255,0.3);
+}
+
+/* Textarea style */
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Button */
+button[type="submit"] {
+    padding: 12px 20px;
+    background-color: #007bff;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+    .container {
+        margin: 20px;
+        padding: 20px;
+    }
+}

@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 # Create your models here.
 
 class Question(models.Model):
@@ -30,7 +30,7 @@ class Match(models.Model):
     ]
 
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True
@@ -71,4 +71,3 @@ class Round(models.Model):
 
     def __str__(self):
         return f"Round #{self.id} - Match #{self.match.id}"
-

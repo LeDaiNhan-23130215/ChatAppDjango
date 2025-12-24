@@ -16,9 +16,19 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-
+from accounts import views as accounts_views
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include('quiz.urls')),
+ path('admin/', admin.site.urls),
+
+    # Trang chủ chính
+    path('', accounts_views.homepage, name='homepage'),
+
+    # App accounts
+    path('accounts/', include('accounts.urls')),
+
+    # App quiz
+    path('quiz/', include('quiz.urls')),  
+
+    # App AI battle
     path('user-vs-ai/', include('quiz_ai_battle.urls')),
 ]

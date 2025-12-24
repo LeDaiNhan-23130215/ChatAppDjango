@@ -19,5 +19,5 @@ urlpatterns = [
     'summary/<int:match_id>/',
     views.summary,
     name='summary'
-),
+    ),
 ]
