@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/complete_profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Hoàn thiện hồ sơ</h2>
+    <p>Vui lòng cung cấp thêm thông tin để chúng tôi cá nhân hóa lộ trình học cho bạn.</p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="{{ form.declared_level.id_for_label }}">Trình độ hiện tại</label>
+            {{ form.declared_level }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.goals.id_for_label }}">Mục tiêu học tập</label>
+            {{ form.goals }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.education.id_for_label }}">Học vấn</label>
+            {{ form.education }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.profession.id_for_label }}">Nghề nghiệp</label>
+            {{ form.profession }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.referred_frequency.id_for_label }}">Tần suất học mong muốn</label>
+            {{ form.referred_frequency }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.motivation_level.id_for_label }}">Mức độ động lực (1–5)</label>
+            {{ form.motivation_level }}
+        </div>
+
+        <button type="submit" class="btn-submit">Lưu & tiếp tục</button>
+    </form>
+</div>
+{% endblock %}

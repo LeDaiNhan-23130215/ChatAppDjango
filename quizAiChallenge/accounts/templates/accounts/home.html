@@ -1,0 +1,105 @@
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <!DOCTYPE html>
+    <html lang="en">  
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Home</title>
+    </head>
+
+    <body>
+
+        <header id="main-header">
+            <div class="logo">Tên Logo</div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="{% url 'homepage' %}">Trang Chủ</a></li>
+                    <li><a href="{% url 'quiz_ai_battle:start_match' %}">User Challenge</a></li>
+                    <li><a href="{% url 'quiz_home' %}">AI Challenge</a></li>
+                    <li><a href="#mini-games">Mini Games</a></li>
+                    <li><a href="#leaderboard">Leaderboard</a></li>
+                </ul>
+            </nav>
+            <div class="user-controls">
+                <div class="user-controls">
+                    {% if user.is_authenticated %}
+                        <span>Xin chào {{ user.username }}</span>
+                        <a href="{% url 'logout' %}">Đăng xuất</a>
+                    {% else %}
+                        <a href="{% url 'login' %}">Đăng nhập / Đăng ký</a>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <section id="home" class="hero-section">
+                <h1>Sẵn sàng cho Thách thức AI?</h1>
+                <p>Kiểm tra kiến thức và tốc độ của bạn!</p>
+                <a href="#ai-challenge" class="cta-button">Bắt Đầu Thử Thách AI</a>
+            </section>
+
+            <section id="dashboard-summary" class="container">
+                <div class="card progress-tracking">
+                    <h2>Tiến độ của Tôi</h2>
+                    <p>Điểm cao nhất: 1250</p>
+                    <div class="progress">
+                        <p>Mức độ hoàn thành bài tập</p>
+                        <div class="progress-bar-container">
+                            <div>
+                                <p>70%</p>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="#progress-tracking">Xem chi tiết</a>
+                </div>
+                <div class="card leaderboard-snippet">
+                    <h2>Bảng Xếp Hạng Top 5</h2>
+                    <ul>
+                        <li>#1. User A - 1500đ</li>
+                        <li>#2. User B - 1450đ</li>
+                    </ul>
+                    <a href="#leaderboard">Xem toàn bộ</a>
+                </div>
+            </section>
+
+            <section id="mini-games-preview" class="container">
+                <h2>Chơi Mini Games Thư Giãn</h2>
+                <div class="mini-games-grid">
+
+                    <a href="#vocab-velocity" class="game-card">
+                        <div class="game-icon">📝</div>
+                        <h3>Vocab Velocity</h3>
+                        <p>Trắc nghiệm từ vựng, đồng nghĩa, trái nghĩa tốc độ cao.</p>
+                    </a>
+
+                    <a href="#grammar-grid" class="game-card">
+                        <div class="game-icon">🏗️</div>
+                        <h3>Grammar Grid</h3>
+                        <p>Sửa lỗi ngữ pháp và chọn cấu trúc câu chính xác.</p>
+                    </a>
+
+                    <a href="#idiom-dash" class="game-card">
+                        <div class="game-icon">🗣️</div>
+                        <h3>Idiom Dash</h3>
+                        <p>Giải nghĩa thành ngữ và cụm động từ trong thời gian giới hạn.</p>
+                    </a>
+
+                    <a href="#tense-tycoon" class="game-card">
+                        <div class="game-icon">⏳</div>
+                        <h3>Tense Tycoon</h3>
+                        <p>Chọn thì/thời thích hợp nhất cho mỗi câu nhanh chóng.</p>
+                    </a>
+                </div>
+            </section>
+
+        </main>
+
+        <footer>
+            <p>AI Quiz & Challenge for English Learners</p>
+        </footer>
+
+    </body>
+
+    </html>

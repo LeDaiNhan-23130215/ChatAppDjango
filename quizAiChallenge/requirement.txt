@@ -1,0 +1,7 @@
+
+Django==6.0
+channels
+daphne
+python-dotenv
+groq
+pytest
