@@ -1,34 +1,36 @@
 {% load static %}
 <link rel="stylesheet" href="{% static 'quiz_ai_battle/style.css' %}">
 
-<h2 class="title">🎮 Choose AI Mode</h2>
+<div class="background">
+    <h2 class="title">🎮 Choose AI Mode</h2>
 
-<form method="post" class="ai-form">
-    {% csrf_token %}
+    <form method="post" class="ai-form">
+        {% csrf_token %}
 
-    <label class="ai-card">
-        <input type="radio" name="ai_mode" value="random" checked>
-        <div class="card-content">
-            <div class="icon">🤖</div>
-            <div class="text">
-                <h3>Random AI</h3>
-                <p>Trả lời ngẫu nhiên, dễ chơi</p>
+        <label class="ai-card">
+            <input type="radio" name="ai_mode" value="random" checked>
+            <div class="card-content">
+                <div class="icon">🤖</div>
+                <div class="text">
+                    <h3>Random AI</h3>
+                    <p>Trả lời ngẫu nhiên, dễ chơi</p>
+                </div>
             </div>
-        </div>
-    </label>
+        </label>
 
-    <label class="ai-card">
-        <input type="radio" name="ai_mode" value="gpt">
-        <div class="card-content">
-            <div class="icon">🧠</div>
-            <div class="text">
-                <h3>GPT AI</h3>
-                <p>Thông minh hơn, dùng AI GPT</p>
+        <label class="ai-card">
+            <input type="radio" name="ai_mode" value="gpt">
+            <div class="card-content">
+                <div class="icon">🧠</div>
+                <div class="text">
+                    <h3>GPT AI</h3>
+                    <p>Thông minh hơn, dùng AI GPT</p>
+                </div>
             </div>
-        </div>
-    </label>
+        </label>
 
-    <button type="submit" class="start-btn">
-        🚀 Start Match
-    </button>
-</form>
+        <button type="submit" class="start-btn">
+            🚀 Start Match
+        </button>
+    </form>
+</div>
