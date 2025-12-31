@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kết quả Entrance Test</title>
+</head>
+<body>
+    <h1>Kết quả Entrance Test TOEIC</h1>
+
+    <p>Điểm số: <strong>{{ score }}</strong></p>
+    <p>Trình độ: <strong>{{ level }}</strong></p>
+
+    <p>
+        Số câu đúng: {{ correct_answers }} / {{ total_questions }}
+    </p>
+
+    <a href="{% url 'learning-path' %}">
+        Xem lộ trình học đề xuất
+    </a>
+</body>
+</html>

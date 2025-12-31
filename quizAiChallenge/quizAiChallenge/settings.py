@@ -39,6 +39,9 @@ INSTALLED_APPS = [
     'quiz',
     'accounts',
     'quiz_ai_battle',
+    'core',
+    'entrance_test',
+    
     
     'django.contrib.admin',
     'django.contrib.auth',

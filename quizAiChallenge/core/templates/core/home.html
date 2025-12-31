@@ -1,0 +1,54 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Trang Chủ{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<section id="home" class="hero-section">
+    <h1>Sẵn sàng cho Thách thức AI?</h1>
+    <p>Kiểm tra kiến thức và tốc độ của bạn!</p>
+    <a href="{% url 'quiz_ai_battle:start_match' %}" class="cta-button">
+        Bắt Đầu Thử Thách AI
+    </a>
+</section>
+
+<section id="dashboard-summary" class="container">
+    <div class="card progress-tracking">
+        <h2>Tiến độ của Tôi</h2>
+        <p>Điểm cao nhất: 1250</p>
+        <p>Mức độ hoàn thành: 70%</p>
+        <a href="#">Xem chi tiết</a>
+    </div>
+
+    <div class="card leaderboard-snippet">
+        <h2>Bảng Xếp Hạng Top 5</h2>
+        <ul>
+            <li>#1. User A - 1500đ</li>
+            <li>#2. User B - 1450đ</li>
+        </ul>
+        <a href="#leaderboard">Xem toàn bộ</a>
+    </div>
+</section>
+
+<section id="mini-games-preview" class="container">
+    <h2>Chơi Mini Games Thư Giãn</h2>
+
+    <div class="mini-games-grid">
+        <div class="game-card">
+            <h3>Vocab Velocity</h3>
+            <p>Trắc nghiệm từ vựng tốc độ cao.</p>
+        </div>
+
+        <div class="game-card">
+            <h3>Grammar Grid</h3>
+            <p>Sửa lỗi ngữ pháp.</p>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

@@ -15,8 +15,11 @@ def login_view(req):
         user = authenticate(req, username=username, password=password)
         if user:
             login(req, user)
+
+            # kiểm tra profile sau khi login
             if not user.is_profile_completed():
                 return redirect('complete-profile')
+
             return redirect('homepage')
         else:
             messages.error(req, 'Sai tài khoản hoặc mật khẩu')
@@ -39,7 +42,9 @@ def register_view(req):
                 password=password
             )
             login(req, user)
-            return redirect('homepage')
+
+            # bắt buộc hoàn thiện profile sau khi đăng ký
+            return redirect('complete-profile')
 
     return render(req, 'accounts/register.html')
 
@@ -47,12 +52,12 @@ def logout_view(req):
     logout(req)
     return redirect('login')
 
-def homepage(request):
-    """Trang chủ chính của web"""
-    return render(request, "accounts/home.html")
-
 @login_required
 def complete_view(req):
+    # nếu profile đã hoàn thiện thì không cho vào lại trang này
+    if req.user.is_profile_completed():
+        return redirect('homepage')
+
     if req.method == 'POST':
         form = CompleteProfileForm(req.POST, instance=req.user)
         if form.is_valid():
