@@ -97,19 +97,24 @@ def analyze_weak_parts(result):
         part = ans.question.part
         part_stats[part]['total'] += 1
 
-        if ans.is_correct:
+        if ans.is_correct():
             part_stats[part]['correct'] += 1
     
     weak_parts = []
+    ALL_PARTS = [1,2,3,4,5,6,7]
+    for part in ALL_PARTS:
+        stats = part_stats.get(part, {'correct': 0, 'total': 0})
 
-    for part, stats in part_stats.items():
-        accuracy =  stats['correct'] / stats['total']
+        if stats['total'] == 0:
+            accuracy = 0
+        else:
+            accuracy =  stats['correct'] / stats['total']
 
-        if accuracy < 0.6:
-            weak_parts.append(dict(
-                part = part,
-                accuracy = round(accuracy * 100)
-            ))
+            if accuracy < 0.6:
+                weak_parts.append(dict(
+                    part = part,
+                    accuracy = round(accuracy * 100)
+                ))
     
     return weak_parts
 

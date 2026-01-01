@@ -1,7 +1,10 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 <!DOCTYPE html>
 <html>
 <head>
     <title>Entrance Test</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 </head>
 <body>
     <h1>Entrance Test</h1>
@@ -13,7 +16,7 @@
 
     <ul>
         <li>Thời gian: ~20 phút</li>
-        <li>Số câu hỏi: 20</li>
+        <li>Số câu hỏi: {{questions_count}}</li>
         <li>Không giới hạn số lần làm</li>
     </ul>
 
