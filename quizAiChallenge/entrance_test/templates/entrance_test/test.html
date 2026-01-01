@@ -1,7 +1,10 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 <!DOCTYPE html>
 <html>
 <head>
     <title>TOEIC Entrance Test</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 </head>
 <body>
     <h1>Bài kiểm tra đầu vào TOEIC</h1>
@@ -15,23 +18,20 @@
         {% csrf_token %}
 
         {% for question in questions %}
-            <div style="margin-bottom: 25px;">
-                <p>
-                    <strong>
-                        Câu {{ forloop.counter }} ({{ question.get_part_display }}):
-                    </strong>
-                </p>
+            {% if question.passage %}
+                <div style="background-color: #f0f0f0; padding: 10px; margin-bottom: 10px;">
+                    <strong>Passage:</strong>
+                    <p>{{ question.passage|linebreaksbr }}</p>
+                </div>
+            {% endif %}
 
+            <div style="margin-bottom: 25px;">
+                <p><strong>Câu {{ forloop.counter }} ({{ question.get_part_display }}):</strong></p>
                 <p>{{ question.content }}</p>
 
                 {% for choice in question.choices.all %}
                     <label>
-                        <input
-                            type="radio"
-                            name="q{{ question.id }}"
-                            value="{{ choice.id }}"
-                            required
-                        >
+                        <input type="radio" name="q{{ question.id }}" value="{{ choice.id }}" required>
                         {{ choice.content }}
                     </label>
                     <br>

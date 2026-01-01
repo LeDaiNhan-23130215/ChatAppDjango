@@ -26,6 +26,13 @@ class Question(models.Model):
         related_name='questions'
     )
     part = models.IntegerField(choices=PART_CHOICES)
+
+    passage = models.TextField(
+        blank=True,
+        null=True,
+        help_text= "Conversation / Short talk / Reading passage"
+    )
+
     content = models.TextField()
 
     def __str__(self):
