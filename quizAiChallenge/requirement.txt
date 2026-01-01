@@ -5,3 +5,4 @@ daphne
 python-dotenv
 groq
 pytest
+Pillow
