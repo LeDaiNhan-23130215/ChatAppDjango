@@ -1,9 +1,11 @@
-from entrance_test.models import EntranceTest, Question, Choice
-
+from entrance_test.models import EntranceTest, Question, Choice, QuestionImage
+from django.conf import settings
+from django.core.files import File
+import os
 
 def run():
     # 1. Tạo hoặc lấy bài test
-    test, created = EntranceTest.objects.get_or_create(
+    test, _ = EntranceTest.objects.get_or_create(
         title="TOEIC Entrance Test",
         defaults={
             "description": "TOEIC entrance test with passages for skill analysis",
@@ -11,8 +13,8 @@ def run():
         }
     )
 
-    # 2. Xóa dữ liệu cũ
     test.questions.all().delete()
+    QuestionImage.objects.all().delete()
 
     questions_data = [
 
@@ -20,6 +22,10 @@ def run():
         {
             "part": 1,
             "passage": None,
+            "image": {
+                "file": "toeic_image/part1_q1.jpg",
+                "description": "Woman typing on a laptop in an office"
+            },
             "content": "What can be seen in the picture?",
             "choices": [
                 ("A man is answering the phone", False),
@@ -31,6 +37,10 @@ def run():
         {
             "part": 1,
             "passage": None,
+            "image": {
+                "file": "toeic_image/part1_q2.jpg",
+                "description": "Man speaking to coworkers"
+            },
             "content": "What is the man doing?",
             "choices": [
                 ("He is giving instructions", True),
@@ -44,6 +54,7 @@ def run():
         {
             "part": 2,
             "passage": None,
+            "image": None,
             "content": "When will the meeting start?",
             "choices": [
                 ("In the conference room", False),
@@ -55,6 +66,7 @@ def run():
         {
             "part": 2,
             "passage": None,
+            "image": None,
             "content": "Where is the invoice?",
             "choices": [
                 ("I sent it by email", True),
@@ -71,6 +83,7 @@ def run():
                 "A man is calling a woman about a delayed shipment.\n"
                 "The woman works in the delivery department."
             ),
+            "image": None,
             "content": "Why is the man calling the woman?",
             "choices": [
                 ("To cancel an order", False),
@@ -85,6 +98,7 @@ def run():
                 "A man is calling a woman about a delayed shipment.\n"
                 "The woman works in the delivery department."
             ),
+            "image": None,
             "content": "What will the woman do next?",
             "choices": [
                 ("Contact the supplier", False),
@@ -101,6 +115,7 @@ def run():
                 "Two coworkers are discussing a team meeting scheduled for tomorrow.\n"
                 "One of them will be out of the office."
             ),
+            "image": None,
             "content": "What are the speakers discussing?",
             "choices": [
                 ("A job interview", False),
@@ -115,6 +130,7 @@ def run():
                 "Two coworkers are discussing a team meeting scheduled for tomorrow.\n"
                 "One of them will be out of the office."
             ),
+            "image": None,
             "content": "Why will one speaker miss the meeting?",
             "choices": [
                 ("He is sick", False),
@@ -131,6 +147,7 @@ def run():
                 "This is an announcement for passengers traveling on Flight 602.\n"
                 "The flight has been delayed due to weather conditions."
             ),
+            "image": None,
             "content": "What is the announcement mainly about?",
             "choices": [
                 ("A canceled flight", False),
@@ -145,6 +162,7 @@ def run():
                 "This is an announcement for passengers traveling on Flight 602.\n"
                 "The flight has been delayed due to weather conditions."
             ),
+            "image": None,
             "content": "What are passengers asked to do?",
             "choices": [
                 ("Leave the gate area", False),
@@ -161,6 +179,7 @@ def run():
                 "The company cafeteria will be closed this Friday for maintenance.\n"
                 "Employees may use nearby restaurants."
             ),
+            "image": None,
             "content": "What is being announced?",
             "choices": [
                 ("A new cafeteria", False),
@@ -175,6 +194,7 @@ def run():
                 "The company cafeteria will be closed this Friday for maintenance.\n"
                 "Employees may use nearby restaurants."
             ),
+            "image": None,
             "content": "What are employees advised to do?",
             "choices": [
                 ("Bring their own food", False),
@@ -188,6 +208,7 @@ def run():
         {
             "part": 5,
             "passage": None,
+            "image": None,
             "content": "The report must be completed _____ Friday.",
             "choices": [
                 ("at", False),
@@ -199,6 +220,7 @@ def run():
         {
             "part": 5,
             "passage": None,
+            "image": None,
             "content": "Ms. Lee is responsible _____ organizing the training session.",
             "choices": [
                 ("of", False),
@@ -210,6 +232,7 @@ def run():
         {
             "part": 5,
             "passage": None,
+            "image": None,
             "content": "The manager asked the staff to work _____ this weekend.",
             "choices": [
                 ("additional", False),
@@ -221,6 +244,7 @@ def run():
         {
             "part": 5,
             "passage": None,
+            "image": None,
             "content": "All employees are required to attend the _____ meeting.",
             "choices": [
                 ("annual", True),
@@ -237,6 +261,7 @@ def run():
                 "Please review the attached document carefully.\n"
                 "Make sure all information is correct before submitting the form."
             ),
+            "image": None,
             "content": "Please review the attached document _____ submitting the form.",
             "choices": [
                 ("before", True),
@@ -251,6 +276,7 @@ def run():
                 "Please review the attached document carefully.\n"
                 "Make sure all information is correct before submitting the form."
             ),
+            "image": None,
             "content": "What should be checked before submission?",
             "choices": [
                 ("The delivery address", False),
@@ -267,6 +293,7 @@ def run():
                 "NOTICE:\n"
                 "The office will be closed all day Friday due to maintenance work."
             ),
+            "image": None,
             "content": "According to the notice, when will the office be closed?",
             "choices": [
                 ("On Monday morning", False),
@@ -281,6 +308,7 @@ def run():
                 "NOTICE:\n"
                 "The office will be closed all day Friday due to maintenance work."
             ),
+            "image": None,
             "content": "Why will the office be closed?",
             "choices": [
                 ("A public holiday", False),
@@ -293,11 +321,26 @@ def run():
 
     # Insert dữ liệu
     for q in questions_data:
+        image_obj = None
+
+        if q["image"]:
+            img_path = os.path.join(settings.MEDIA_ROOT, q["image"]["file"])
+
+            if os.path.exists(img_path):
+                with open(img_path, "rb") as f:
+                    image_obj = QuestionImage.objects.create(
+                        image=File(f, name=os.path.basename(img_path)),
+                        description=q["image"]["description"]
+                    )
+            else:
+                print(f"⚠️ Image not found: {img_path}")
+
         question = Question.objects.create(
             test=test,
             part=q["part"],
             passage=q["passage"],
-            content=q["content"]
+            content=q["content"],
+            image=image_obj
         )
 
         for content, is_correct in q["choices"]:
@@ -307,4 +350,4 @@ def run():
                 is_correct=is_correct
             )
 
-    print("✅ Seed TOEIC Entrance Test (20 questions) SUCCESS")
+    print("✅ Seed TOEIC Entrance Test SUCCESS")
