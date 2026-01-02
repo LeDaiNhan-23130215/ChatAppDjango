@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'entrance_test',
     'learning_profile',
     'learning_path',
+    'lesson',
     
     'django.contrib.admin',
     'django.contrib.auth',
