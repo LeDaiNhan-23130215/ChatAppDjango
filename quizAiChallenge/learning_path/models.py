@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 from entrance_test.models import EntranceTestResult
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 # Create your models here.
 class LearningPath(models.Model):
     user = models.ForeignKey(
@@ -28,6 +30,11 @@ class LearningPathItem(models.Model):
         ('QUIZ', 'Quiz'),
         ('MOCK', 'Mock Test'),
     ]
+    STATUS_CHOICES = [
+        ('LOCKED', 'Locked'),
+        ('UNLOCKED', 'Unlocked'),
+        ('COMPLETED', 'Completed'),
+    ]
 
     path = models.ForeignKey(
         LearningPath,
@@ -35,8 +42,11 @@ class LearningPathItem(models.Model):
         related_name='items'
     )
 
+    title = models.CharField(max_length=255)
+
+    item_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+
     skill_code = models.CharField(max_length=50)
-    # VD: LISTENING_PICTURE
 
     level = models.CharField(
         max_length=20,
@@ -46,13 +56,30 @@ class LearningPathItem(models.Model):
             ('advanced', 'Advanced'),
         ]
     )
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
 
-    item_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    object_id = models.PositiveIntegerField(
+        null=True,
+        blank=True
+    )
 
-    title = models.CharField(max_length=255)
+    content_object = GenericForeignKey(
+        'content_type',
+        'object_id'
+    )
+
     order = models.PositiveIntegerField()
-
-    is_completed = models.BooleanField(default=False)
-
+    
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='LOCKED'
+    )
+    completed_at = models.DateTimeField(null=True, blank=True)
     class Meta:
         ordering = ['order']

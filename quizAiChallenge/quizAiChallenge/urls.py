@@ -21,7 +21,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
- path('admin/', admin.site.urls),
+    #Trang Admin
+    path('admin/', admin.site.urls),
 
     # Trang chủ chính
     path('', core_views.homepage, name='homepage'),
@@ -36,7 +37,10 @@ urlpatterns = [
     path('user-vs-ai/', include('quiz_ai_battle.urls')),
 
     #App Entrance Test
-    path('entrance-test/', include('entrance_test.urls'))
+    path('entrance-test/', include('entrance_test.urls')),
+
+    #App Learning Path
+    path('learning-path/', include('learning_path.urls')),
 ]
 
 urlpatterns += static(
