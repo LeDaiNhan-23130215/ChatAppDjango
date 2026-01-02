@@ -50,6 +50,13 @@ class Question(models.Model):
     def __str__(self):
         return f'Part {self.part}: {self.content[:50]}'
     
+    def clean(self):
+        if self.part == 1 and not self.image:
+            raise ValidationError("Part 1 requires an image")
+
+        if self.part in [3, 4, 6, 7] and not self.passage:
+            raise ValidationError("This part requires a passage")
+        
 class Choice(models.Model):
     question = models.ForeignKey(
         Question,
@@ -106,10 +113,3 @@ class UserAnswer(models.Model):
     
     class Meta:
         unique_together = ('result', 'question')
-
-def clean(self):
-    if self.part == 1 and not self.image:
-        raise ValidationError("Part 1 requires an image")
-
-    if self.part in [3, 4, 6, 7] and not self.passage:
-        raise ValidationError("This part requires a passage")

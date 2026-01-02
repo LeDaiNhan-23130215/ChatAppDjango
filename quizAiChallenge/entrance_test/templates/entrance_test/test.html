@@ -19,32 +19,39 @@
 
         {% for question in questions %}
             {% if question.passage %}
-                <div style="background-color: #f0f0f0; padding: 10px; margin-bottom: 10px;">
+                <div class="passage-box">
                     <strong>Passage:</strong>
                     <p>{{ question.passage|linebreaksbr }}</p>
                 </div>
             {% endif %}
-        
+
             {% if question.image and question.image.image %}
                 <img src="{{ question.image.image.url }}" width="300px">
             {% endif %}
 
-            <div style="margin-bottom: 25px;">
-                <p><strong>Câu {{ forloop.counter }} ({{ question.get_part_display }}):</strong></p>
+            <div class="question-block">
+                <p>
+                    <strong>
+                        Câu {{ forloop.counter }} ({{ question.get_part_display }}):
+                    </strong>
+                </p>
+
                 <p>{{ question.content }}</p>
 
                 {% for choice in question.choices.all %}
                     <label>
-                        <input type="radio" name="q{{ question.id }}" value="{{ choice.id }}" required>
+                        <input type="radio"
+                            name="q{{ question.id }}"
+                            value="{{ choice.id }}"
+                            required>
                         {{ choice.content }}
-                    </label>
-                    <br>
+                    </label><br>
                 {% endfor %}
             </div>
             <hr>
         {% endfor %}
 
         <button type="submit">Nộp bài</button>
-    </form>
+</form>
 </body>
 </html>

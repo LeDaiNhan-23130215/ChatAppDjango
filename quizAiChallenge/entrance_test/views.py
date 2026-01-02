@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
-from .services import cal_result, analyze_weak_parts, get_part_display, generate_learning_path
-from .models import EntranceTest, EntranceTestResult, Question
+from learning_profile.services.analyzer import analyze_entrance_test
+from learning_path.services.path_generator import generate_learning_path
+from .models import EntranceTest, EntranceTestResult, Question, UserAnswer, Choice
 from collections import defaultdict
+from django.utils import timezone
 # Create your views here.
 
 User = get_user_model()
@@ -21,7 +23,53 @@ def entrance_test_view(req):
     test = EntranceTest.objects.get(title="TOEIC Entrance Test")
     questions = Question.objects.filter(test=test).order_by('part', 'id')
 
-    return render(req, 'entrance_test/test.html', {'questions': questions})
+    if req.method == 'POST':
+        correct = 0
+        answers_cache = []
+
+        # Duyệt câu trả lời
+        for question in questions:
+            choice_id = req.POST.get(f'q{question.id}')
+            if not choice_id:
+                continue
+
+            answers_cache.append((question, choice_id))
+
+            choice = Choice.objects.get(id=choice_id)
+            if choice.is_correct:
+                correct += 1
+
+        total = len(answers_cache)
+        score = round(correct / total * 100)
+
+        # TẠO RESULT
+        result = EntranceTestResult.objects.create(
+            user=req.user,
+            test=test,
+            score=score,
+            correct_answers=correct,
+            total_questions=total,
+            level='BEGINNER',
+            taken_at=timezone.now()
+        )
+
+        # LƯU UserAnswer
+        for question, choice_id in answers_cache:
+            UserAnswer.objects.create(
+                result=result,
+                question=question,
+                selected_choice_id=choice_id
+            )
+
+        # PHÂN TÍCH & SINH LEARNING PATH
+        analyze_entrance_test(result)
+        generate_learning_path(result)
+
+        return redirect('result')
+
+    return render(req, 'entrance_test/test.html', {
+        'questions': questions
+    })
 
 @login_required
 def result_view(req):
@@ -64,35 +112,4 @@ def result_view(req):
     }
 
     return render(req, 'entrance_test/result.html', context)
-
-@login_required
-def learning_path_view(request):
-    result = EntranceTestResult.objects.filter(
-        user=request.user
-    ).order_by('-taken_at').first()
-
-    if not result:
-        return redirect('intro')
-
-    weak_parts = analyze_weak_parts(result)
-    if not weak_parts:
-        weak_parts = [
-            {'part': 5, 'accuracy': 100},  # Grammar luôn nên học
-            {'part': 7, 'accuracy': 100},  # Reading
-        ]
-    learning_path = generate_learning_path(result.level, weak_parts)
-
-    context = {
-        'level': result.level,
-        'learning_path': [
-            {
-                'part_name': get_part_display(item['part']),
-                'focus': item['focus'],
-                'level_strategy': item['level_strategy'],
-            }
-            for item in learning_path
-        ]
-    }
-
-    return render(request, 'entrance_test/learning_path.html', context)
 
