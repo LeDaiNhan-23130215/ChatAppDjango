@@ -81,10 +81,10 @@ def cal_result(user, test, user_answers):
 
 def map_score_to_level(score):
     if score < 40:
-        return 'beginner'
+        return 'BEGINNER'
     elif score < 70:
-        return 'intermediate'
-    return 'advanced'
+        return 'INTERMEDIATE'
+    return 'ADVANCED'
 
 def analyze_weak_parts(result):
     part_stats = defaultdict(lambda: {'correct': 0, 'total': 0})
@@ -120,19 +120,3 @@ def analyze_weak_parts(result):
 
 def get_part_display(part_number):
     return dict(Question.PART_CHOICES).get(part_number)
-
-def generate_learning_path(level, weak_parts):
-    learning_path = []
-
-    weak_parts = sorted(weak_parts, key=lambda x: x['accuracy'])
-
-    for item in weak_parts:
-        part = item['part']
-
-        learning_path.append({
-            'part': part,
-            'focus': PART_LEARNING_CONTENT.get(part, []),
-            'level_strategy': LEVEL_ADJUSTMENT.get(level, []),
-        })
-
-    return learning_path

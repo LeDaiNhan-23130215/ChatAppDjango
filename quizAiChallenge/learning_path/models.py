@@ -3,6 +3,7 @@ from django.conf import settings
 from entrance_test.models import EntranceTestResult
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
+from common.constants import SkillLevel, LearningPathItemStatus
 # Create your models here.
 class LearningPath(models.Model):
     user = models.ForeignKey(
@@ -30,11 +31,6 @@ class LearningPathItem(models.Model):
         ('QUIZ', 'Quiz'),
         ('MOCK', 'Mock Test'),
     ]
-    STATUS_CHOICES = [
-        ('LOCKED', 'Locked'),
-        ('UNLOCKED', 'Unlocked'),
-        ('COMPLETED', 'Completed'),
-    ]
 
     path = models.ForeignKey(
         LearningPath,
@@ -50,11 +46,7 @@ class LearningPathItem(models.Model):
 
     level = models.CharField(
         max_length=20,
-        choices=[
-            ('beginner', 'Beginner'),
-            ('intermediate', 'Intermediate'),
-            ('advanced', 'Advanced'),
-        ]
+        choices=SkillLevel.choices
     )
     content_type = models.ForeignKey(
         ContentType,
@@ -77,7 +69,7 @@ class LearningPathItem(models.Model):
     
     status = models.CharField(
         max_length=10,
-        choices=STATUS_CHOICES,
+        choices= LearningPathItemStatus.choices,
         default='LOCKED'
     )
     completed_at = models.DateTimeField(null=True, blank=True)

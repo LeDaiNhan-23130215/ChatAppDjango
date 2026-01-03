@@ -1,15 +1,9 @@
 from django.db import models
 from django.conf import settings
 from entrance_test.models import EntranceTestResult
+from common.constants import SkillCode, SkillLevel
 # Create your models here.
 class UserSkillProfile(models.Model):
-    LEVEL_CHOICES = [
-        ('BEGINNER', 'Beginner'),
-        ('ELEMENTARY', 'Elementary'),
-        ('INTERMEDIATE', 'Intermediate'),
-        ('ADVANCED', 'Advanced'),
-    ]
-
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -24,6 +18,7 @@ class UserSkillProfile(models.Model):
 
     skill = models.CharField(
         max_length=50,
+        choices=SkillCode.choices,
         help_text="TOEIC skill or part, e.g. PART_1_LISTENING"
     )
 
@@ -41,7 +36,7 @@ class UserSkillProfile(models.Model):
 
     level = models.CharField(
         max_length=20,
-        choices=LEVEL_CHOICES
+        choices=SkillLevel.choices
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

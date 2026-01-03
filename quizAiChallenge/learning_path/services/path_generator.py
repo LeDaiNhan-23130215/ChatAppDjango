@@ -4,6 +4,7 @@ from learning_profile.models import UserSkillProfile
 from lesson.models import Lesson
 from quiz.models import Quiz
 from django.contrib.contenttypes.models import ContentType
+from common.constants import SkillLevel
 
 def get_lesson(skill_code, level):
     return Lesson.objects.filter(
@@ -43,19 +44,23 @@ def generate_learning_path(result):
         rules = SKILL_LEARNING_RULES.get(skill.skill)
         if not rules:
             continue
-
-        steps = rules.get(skill.level, [])
+        
+        level_enum = SkillLevel(skill.level)
+        steps = rules.get(level_enum, [])
 
         for step in steps:
             content_object = None
 
             if step == 'LESSON':
-                content_object = get_lesson(skill.skill, skill.level)
+                content_object = get_lesson(
+                skill.skill,
+                level_enum.value
+                )
 
             elif step in ['PRACTICE', 'QUIZ', 'MOCK']:
                 content_object = get_quiz(
                     skill.skill,
-                    skill.level,
+                    level_enum.value,
                     step
                 )
 
@@ -78,4 +83,32 @@ def generate_learning_path(result):
         firstItem = items.first()
         firstItem.status = 'UNLOCKED'
         firstItem.save()
+
+    print("=== GENERATE LEARNING PATH ===")
+    print("User:", user)
+
+    skills = UserSkillProfile.objects.filter(
+        user=user,
+        result=result
+    )
+
+    print("Skill count:", skills.count())
+
+    for skill in skills:
+        print("Skill:", skill.skill, "Level:", skill.level)
+
+        rules = SKILL_LEARNING_RULES.get(skill.skill)
+        print("Rules:", rules)
+
+        if not rules:
+            print("❌ NO RULE FOR", skill.skill)
+            continue
+
+        level_enum = SkillLevel(skill.level)
+        steps = rules.get(level_enum, [])
+        print("Steps:", steps)
+
+
+        for step in steps:
+            print("  -> Create item:", step)
     return path
