@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from learning_profile.services.analyzer import analyze_entrance_test
 from learning_path.services.path_generator import generate_learning_path
+from .services import map_score_to_level
 from .models import EntranceTest, EntranceTestResult, Question, UserAnswer, Choice
 from collections import defaultdict
 from django.utils import timezone
@@ -49,7 +50,7 @@ def entrance_test_view(req):
             score=score,
             correct_answers=correct,
             total_questions=total,
-            level='BEGINNER',
+            level= map_score_to_level(score),
             taken_at=timezone.now()
         )
 
@@ -65,7 +66,7 @@ def entrance_test_view(req):
         analyze_entrance_test(result)
         generate_learning_path(result)
 
-        return redirect('result')
+        return redirect('entrance_test:result')
 
     return render(req, 'entrance_test/test.html', {
         'questions': questions

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'daphne',
     'channels',
     'quiz',
+    'rest_framework',
     'accounts',
     'quiz_ai_battle',
     'core',

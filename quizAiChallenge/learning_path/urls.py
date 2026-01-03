@@ -1,6 +1,6 @@
 from django.urls import path
 from learning_path.views import learning_path_view, learing_path_item_view, mock_exam_start_view, lesson_detail_view, quiz_start_view, practice_start_view
-
+from learning_path.views import CurrentLearningPathView
 urlpatterns = [
     path('', learning_path_view, name='learning_path'),
     path('item/<int:item_id>/', learing_path_item_view, name='learning_path_item'),
@@ -8,4 +8,9 @@ urlpatterns = [
     path('practice/<int:practice_id>/', practice_start_view, name='practice_start'),
     path('lesson/<int:lesson_id>/', lesson_detail_view, name='lesson_detail'),
     path('mock/<int:mock_id>/', mock_exam_start_view, name='mock_exam_start'),
+    path(
+        "learning-path/current/",
+        CurrentLearningPathView.as_view(),
+        name="current-learning-path"
+    ),
 ]

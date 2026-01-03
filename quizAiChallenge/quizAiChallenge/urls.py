@@ -40,7 +40,7 @@ urlpatterns = [
     path('entrance-test/', include('entrance_test.urls')),
 
     #App Learning Path
-    path('learning-path/', include('learning_path.urls')),
+    path('api/', include('learning_path.urls')),
 ]
 
 urlpatterns += static(

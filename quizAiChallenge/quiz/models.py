@@ -1,7 +1,7 @@
 from django.db import models
 import random
 import string
-
+from common.constants import SkillCode, SkillLevel
 class Question(models.Model):
     text = models.CharField(max_length=300)
     a = models.CharField(max_length=200)
@@ -31,22 +31,6 @@ class Room(models.Model):
         return ''.join(random.choices(string.ascii_uppercase, k=6))
 
 class Quiz(models.Model):
-    SKILL_CHOICES = [
-    ('LISTENING_PICTURE', 'Listening – Picture'),
-    ('LISTENING_QA', 'Listening – Question & Answer'),
-    ('LISTENING_CONVERSATION', 'Listening – Conversation'),
-    ('LISTENING_INFORMATION', 'Listening – Information'),
-    ('READING_SENTENCE', 'Reading – Sentence Completion'),
-    ('READING_TEXT', 'Reading – Text Completion'),
-    ('READING_PASSAGE', 'Reading – Reading Comprehension'),
-    ]
-
-    LEVEL_CHOICES = [
-        ('beginner', 'Beginner'),
-        ('intermediate', 'Intermediate'),
-        ('advanced', 'Advanced'),
-    ]
-
     QUIZ_TYPE_CHOICES = [
         ('PRACTICE', 'Practice'),
         ('QUIZ', 'Quiz'),
@@ -57,12 +41,12 @@ class Quiz(models.Model):
 
     skill_code = models.CharField(
         max_length=50,
-        choices=SKILL_CHOICES
+        choices=SkillCode.choices
     )
 
     level = models.CharField(
         max_length=20,
-        choices=LEVEL_CHOICES
+        choices=SkillLevel.choices
     )
 
     quiz_type = models.CharField(

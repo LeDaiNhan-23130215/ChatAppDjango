@@ -1,31 +1,39 @@
-{% load static %}
-<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Lộ trình học TOEIC</title>
+    <title>My Learning Path</title>
+    <style>
+        .item { padding: 12px; border: 1px solid #ddd; margin-bottom: 8px; }
+        .locked { background: #f5f5f5; color: #999; }
+        .unlocked { background: #e8f5e9; }
+        .completed { background: #e3f2fd; }
+        button { padding: 6px 12px; }
+    </style>
 </head>
 <body>
-    <h1>Lộ trình học TOEIC của bạn</h1>
 
-    {% if not path %}
-        <p>Bạn chưa có lộ trình học. Hãy làm bài test đầu vào.</p>
-    {% else %}
-        <ul>
-            {% for item in path.items.all %}
-            <li>
-                {{ item.skill_code }} - {{ item.item_type }}
+<h1>📘 Lộ trình học của bạn</h1>
 
-                {% if item.status == 'COMPLETED' %}
-                    ✅
-                {% elif item.status == 'UNLOCKED' %}
-                    🔓 <a href="{% url 'learning_path_item' item.id %}">Học</a>
-                {% else %}
-                    🔒
-                {% endif %}
-            </li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+{% if items %}
+    {% for item in items %}
+        <div class="item {{ item.status|lower }}">
+            <strong>{{ item.order }}. {{ item.title }}</strong><br>
+            Skill: {{ item.skill_code }} | Type: {{ item.item_type }} <br>
+
+            {% if item.status == "COMPLETED" %}
+                ✅ Đã hoàn thành
+            {% elif item.status == "UNLOCKED" %}
+                ▶ <a href="{% url 'learning_path:item_detail' item.id %}">
+                    <button>Bắt đầu</button>
+                </a>
+            {% else %}
+                🔒 Chưa mở khóa
+            {% endif %}
+        </div>
+    {% endfor %}
+{% else %}
+    <p>⚠️ Bạn chưa có lộ trình học.</p>
+{% endif %}
+
 </body>
 </html>
