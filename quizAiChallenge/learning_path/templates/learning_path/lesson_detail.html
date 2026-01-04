@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ lesson.title }}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <h2>{{ lesson.title }}</h2>
+    <p>Skill: {{ lesson.skill_code }}</p>
+    <p>Level: {{ lesson.level }}</p>
+
+    <hr>
+    <div class="lesson-content">
+        📖 Nội dung bài học:
+        <div>{{ lesson.content|safe }}</div>
+    </div>
+</body>
+</html>
+

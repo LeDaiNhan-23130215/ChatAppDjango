@@ -15,12 +15,13 @@
 
     <!-- HEADER -->
     <header id="main-header">
-        <div class="logo">Tên Logo</div>
+        <div class="logo">WEB LEARNING TOEIC</div>
         <nav class="main-nav">
             <ul>
                 <li><a href="{% url 'homepage' %}">Trang Chủ</a></li>
                 <li><a href="{% url 'quiz_home' %}">User Challenge</a></li>
                 <li><a href="{% url 'quiz_ai_battle:start_match' %}">AI Challenge</a></li>
+                <li><a href="{% url 'learning_path:learning_path' %}">Lộ trình học</a></li>
                 <li><a href="#mini-games">Mini Games</a></li>
                 <li><a href="#leaderboard">Leaderboard</a></li>
             </ul>
