@@ -11,11 +11,9 @@
     <p>Level: {{ mock.level }}</p>
 
     <hr>
-    <form method="post">
+    <form method="post" action="{% url 'learning_path:quiz_submit' mock.id %}">
         {% csrf_token %}
-        {% for section in mock.sections.all %}
-            <h3>{{ section.title }}</h3>
-            {% for question in section.questions.all %}
+            {% for question in mock.questions_for_quiz.all %}
                 <div class="question-box">
                     <p><strong>Câu {{ forloop.counter }}:</strong> {{ question.content }}</p>
                     {% for choice in question.choices.all %}
@@ -26,7 +24,6 @@
                     {% endfor %}
                 </div>
             {% endfor %}
-        {% endfor %}
         <button type="submit">Nộp Mock Exam</button>
     </form>
 </body>

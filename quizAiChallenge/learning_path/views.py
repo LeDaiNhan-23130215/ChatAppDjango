@@ -4,8 +4,9 @@ from django.shortcuts import get_object_or_404, redirect
 from learning_path.models import LearningPath, LearningPathItem
 from entrance_test.models import EntranceTestResult
 from learning_path.services.progress_service import complete_item
-from quiz.models import Quiz
+from quiz.models import Quiz, QuizResult, Choice
 from lesson.models import Lesson
+from django.urls import reverse
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -81,9 +82,62 @@ def mock_exam_start_view(req, mock_id):
     })
 
 @login_required
-def quiz_submit_view(request):
-    pass
+def quiz_submit_view(req, quiz_id):
+    quiz = get_object_or_404(Quiz, id=quiz_id)
 
+    if req.method == 'POST':
+        score = 0
+        total = quiz.questions_for_quiz.count()
+        for question in quiz.questions_for_quiz.all():
+            selected_choice_id = req.POST.get(f"q{question.id}")
+            if selected_choice_id:
+                choice = Choice.objects.get(id=selected_choice_id)
+                if choice.is_correct:
+                    score += 1
+
+        percent = (score / total) * 100 if total > 0 else 0
+        passed = percent >= quiz.pass_score
+
+        QuizResult.objects.create(
+            user=req.user,
+            quiz=quiz,
+            score=score,
+            percent=percent,
+            passed=passed
+        )
+
+        if passed:
+            try:
+                item = LearningPathItem.objects.get(object_id=quiz.id, path__user=req.user)
+                complete_item(item, user=req.user)
+            except LearningPathItem.DoesNotExist:
+                pass
+
+        # Lưu vào session rồi redirect
+        req.session['quiz_result'] = {
+            'score': score,
+            'percent': percent,
+            'passed': passed
+        }
+        return redirect('learning_path:quiz_result', quiz_id=quiz.id)
+
+    return redirect('learning_path:quiz_start', quiz_id=quiz.id)
+
+
+@login_required
+def quiz_result_view(req, quiz_id):
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    result = req.session.get('quiz_result')
+    if not result:
+        return redirect('learning_path:quiz_start', quiz_id=quiz.id)
+
+    return render(req, "learning_path/quiz_result.html", {
+        "quiz": quiz,
+        "score": result['score'],
+        "percent": result['percent'],
+        "passed": result['passed']
+    })
+        
 class CurrentLearningPathView(APIView):
     permission_classes = [IsAuthenticated]
 

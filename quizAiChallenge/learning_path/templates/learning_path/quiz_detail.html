@@ -11,9 +11,9 @@
     <p>Level: {{ quiz.level }}</p>
 
     <hr>
-    <form method="post">
+    <form method="post" action="{% url 'learning_path:quiz_submit' quiz.id %}">
         {% csrf_token %}
-        {% for question in quiz.questions.all %}
+        {% for question in quiz.questions_for_quiz.all %}
             <div class="question-box">
                 <p><strong>Câu {{ forloop.counter }}:</strong> {{ question.content }}</p>
                 {% for choice in question.choices.all %}
