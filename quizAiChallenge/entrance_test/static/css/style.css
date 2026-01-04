@@ -30,6 +30,7 @@ button {
     cursor: pointer;
     font-size: 16px;
     transition: background 0.3s;
+    margin-bottom: 15px;
 }
 
 button:hover {

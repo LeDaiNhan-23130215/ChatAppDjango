@@ -1,14 +1,9 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 <!DOCTYPE html>
 <html>
 <head>
     <title>My Learning Path</title>
-    <style>
-        .item { padding: 12px; border: 1px solid #ddd; margin-bottom: 8px; }
-        .locked { background: #f5f5f5; color: #999; }
-        .unlocked { background: #e8f5e9; }
-        .completed { background: #e3f2fd; }
-        button { padding: 6px 12px; }
-    </style>
 </head>
 <body>
 
@@ -23,7 +18,7 @@
             {% if item.status == "COMPLETED" %}
                 ✅ Đã hoàn thành
             {% elif item.status == "UNLOCKED" %}
-                ▶ <a href="{% url 'learning_path:item_detail' item.id %}">
+                ▶ <a href="{% url 'learning_path:learning_path_item' item.id %}">
                     <button>Bắt đầu</button>
                 </a>
             {% else %}

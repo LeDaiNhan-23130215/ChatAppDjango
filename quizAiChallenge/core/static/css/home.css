@@ -37,7 +37,13 @@ body {
 }
 
 .user-controls a {
+    color: #3498db;
     text-decoration: none
+}
+
+.user-controls a:hover {
+    color: #3eb2ff;
+    text-decoration: none;
 }
 
 /* Menu Chính */

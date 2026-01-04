@@ -1,9 +1,8 @@
-{% load static %}
-<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 <!DOCTYPE html>
 <html>
 <head>
     <title>TOEIC Entrance Test</title>
+    {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 </head>
 <body>
@@ -18,12 +17,14 @@
         {% csrf_token %}
 
         {% for question in questions %}
-            {% if question.passage %}
-                <div class="passage-box">
-                    <strong>Passage:</strong>
-                    <p>{{ question.passage|linebreaksbr }}</p>
-                </div>
-            {% endif %}
+            {% ifchanged question.passage %}
+                {% if question.passage %}
+                    <div class="passage-box">
+                        <strong>Passage:</strong>
+                        <p>{{ question.passage|linebreaksbr }}</p>
+                    </div>
+                {% endif %}
+            {% endifchanged %}
 
             {% if question.image and question.image.image %}
                 <img src="{{ question.image.image.url }}" width="300px">
@@ -41,9 +42,9 @@
                 {% for choice in question.choices.all %}
                     <label>
                         <input type="radio"
-                            name="q{{ question.id }}"
-                            value="{{ choice.id }}"
-                            required>
+                               name="q{{ question.id }}"
+                               value="{{ choice.id }}"
+                               required>
                         {{ choice.content }}
                     </label><br>
                 {% endfor %}
@@ -52,6 +53,6 @@
         {% endfor %}
 
         <button type="submit">Nộp bài</button>
-</form>
+    </form>
 </body>
 </html>
