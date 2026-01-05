@@ -1,4 +1,3 @@
-/* Thiết lập cơ bản (Reset/Box Sizing) */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -12,19 +11,15 @@ body {
     line-height: 1.6;
 }
 
-/* Thanh Điều Hướng (Header) */
 #main-header {
-    height: 10vh;
+    height: 70px;
     background-color: #2c3e50;
-    /* Màu nền đậm */
     color: white;
     padding: 15px 5%;
     display: flex;
-    /* Sử dụng Flexbox để căn chỉnh */
     justify-content: center;
     align-items: center;
     position: sticky;
-    /* Cố định thanh navigation */
     top: 0;
     z-index: 1000;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -37,16 +32,9 @@ body {
 }
 
 .user-controls a {
-    color: #3498db;
     text-decoration: none
 }
 
-.user-controls a:hover {
-    color: #3eb2ff;
-    text-decoration: none;
-}
-
-/* Menu Chính */
 .main-nav {
     margin-right: auto;
 }
@@ -69,12 +57,10 @@ body {
 
 .main-nav ul li a:hover {
     color: #3498db;
-    /* Hiệu ứng hover */
 }
 
-/* Khu vực Điều khiển Người dùng */
 #login-btn {
-    background-color: #e74c3c;
+    background-color: green;
     color: white;
     border: none;
     padding: 8px 15px;
@@ -87,8 +73,9 @@ body {
 #login-btn:hover {
     background-color: #c0392b;
 }
-
-/* Khu vực Chung */
+.main-nav ul li .active{
+    color: #3498db;
+}
 .container {
     width: 90%;
     max-width: 1200px;
@@ -100,7 +87,7 @@ body {
 .progress-bar-container {
     background-color: rgb(204, 204, 204);
     border-radius: 20px;
-    width: 60%;
+    width: 90%;
 }
 
 .progress-bar-container div {
@@ -115,14 +102,12 @@ body {
    color: white;
 }
 
-/* Hero Section (Khu vực Chính Trang Chủ) */
 .hero-section {
     margin: 10px;
     border-radius: 10px;
     background-color: #3498db;
-    /* Màu nổi bật */
     color: white;
-    padding: 80px 5%;
+    padding: 10px 5%;
     text-align: center;
     margin-bottom: 20px;
 }
@@ -135,7 +120,6 @@ body {
 .cta-button {
     display: inline-block;
     background-color: #2ecc71;
-    /* Nút hành động nổi bật */
     color: white;
     text-decoration: none;
     padding: 12px 30px;
@@ -150,39 +134,33 @@ body {
     background-color: #27ae60;
 }
 
-/* Card (Thẻ thông tin) */
 .card {
     background-color: #e0e0e0;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
     flex: 1;
-    /* Chia đều không gian trong Flexbox */
 }
 
-/* Khu vực Tiến độ và Leaderboard */
 #dashboard-summary .progress-tracking {
     flex: 2;
-    /* Progress tracking có thể rộng hơn */
 }
 
 #dashboard-summary .leaderboard-snippet {
     flex: 1;
 }
 
-/* Thêm style cho phần Mini Games */
 #mini-games-preview{
     display: block;
 }
 #mini-games-preview h2 {
     margin-bottom: 20px;
-    text-align: center; /* Căn giữa tiêu đề */
+    text-align: center; 
     width: 100%;
 }
 
 .mini-games-grid {
     display: grid;
-    /* Chia làm 4 cột bằng nhau, có khoảng cách 20px */
     grid-template-columns: repeat(4, 1fr); 
     gap: 20px; 
     width: 100%;
@@ -190,13 +168,10 @@ body {
 }
 
 .game-card {
-    /* Kế thừa style của card thông thường */
     background-color: white;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-    
-    /* Style riêng cho link */
     text-decoration: none;
     color: #333;
     text-align: center;
@@ -204,7 +179,7 @@ body {
 }
 
 .game-card:hover {
-    transform: translateY(-5px); /* Hiệu ứng nhấc lên khi hover */
+    transform: translateY(-5px); 
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
@@ -216,12 +191,12 @@ body {
 .game-card h3 {
     font-size: 1.2em;
     margin-bottom: 5px;
-    color: #3498db; /* Sử dụng màu chủ đạo cho tiêu đề game */
+    color: #3498db;
 }
 
 .game-card p {
     font-size: 0.9em;
-    color: #7f8c8d; /* Màu chữ phụ */
+    color: #7f8c8d; 
 }
 
 /* Footer */
@@ -231,4 +206,103 @@ footer {
     background-color: #333;
     color: #ccc;
     margin-top: 40px;
+}
+
+.challenge-cards-container {
+    display: flex; 
+    justify-content: center; 
+    gap: 30px; 
+    padding: 40px 20px;
+    max-width: 1200px;
+    margin: 0 auto; 
+}
+
+.challenge-card {
+    flex: 1; 
+    max-width: 450px;
+    padding: 5px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out;
+    text-align: center;
+}
+
+.challenge-card:hover {
+    transform: translateY(-5px); 
+    cursor: pointer;
+}
+
+
+.card-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.user-challenge {
+    background-color: #fff9e6; 
+    border: 1px solid #ffcc00;
+}
+
+.user-challenge .primary-btn {
+    background-color: #ffaa00; 
+    color: white;
+}
+
+.user-challenge .primary-btn:hover {
+    background-color: #cc8800;
+}
+
+.ai-challenge {
+    background-color: #e6f7ff;
+    border: 1px solid #0099e6;
+}
+
+.ai-challenge .secondary-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+.ai-challenge .secondary-btn:hover {
+    background-color: #0056b3;
+}
+.challenge-img{
+    width: 50%;
+}
+.user-challenge-link{
+    text-decoration: none;
+}
+.ai-challenge-link{
+    text-decoration: none;
+}
+.viewall{
+    text-align: center;
+    margin-top: 10px;
+}
+.card a button{
+    background: white;
+    border-radius: 8px;
+    border: none;
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 15px;
+    padding: 5px;
+    margin-top: 10px;
+}
+.card a button:hover{
+background-color: #2ecc71;
+}
+.leaderboard-snippet ol{
+    margin-left: 15px;
+}
+.leaderboard-snippet h2{
+    text-align: center;
+}
+li{
+    position: relative;
+}
+.score{
+ position: absolute;
+ right: 20px;  
 }
