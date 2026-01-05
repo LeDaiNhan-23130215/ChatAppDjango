@@ -1,18 +1,19 @@
 import json
 import asyncio
+import logging
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from .models import Room, Question
 import redis.asyncio as redis
 from redis.asyncio.lock import Lock as RedisLock
 
+logger = logging.getLogger(__name__)
+
 class QuizConsumer(AsyncWebsocketConsumer):
-    # Redis client (shared across all consumers)
     redis_client = None
     
     @classmethod
     async def get_redis(cls):
-        """Get or create Redis connection"""
         if cls.redis_client is None:
             cls.redis_client = await redis.from_url(
                 'redis://localhost:6379',
@@ -21,22 +22,17 @@ class QuizConsumer(AsyncWebsocketConsumer):
             )
         return cls.redis_client
 
-    # --- Redis State Helpers ---
     def state_key(self, code):
-        """Get Redis key for room state"""
         return f'quiz:room:{code}'
     
     def lock_key(self, code):
-        """Get Redis key for room lock"""
         return f'quiz:lock:{code}'
     
     async def get_state(self, code):
-        """Get room state from Redis"""
         redis_conn = await self.get_redis()
         data = await redis_conn.get(self.state_key(code))
         if data:
             state = json.loads(data)
-            # Convert lists back from JSON
             state.setdefault('active_players', [])
             state.setdefault('used_questions', [])
             state.setdefault('channel_to_player', {})
@@ -45,37 +41,23 @@ class QuizConsumer(AsyncWebsocketConsumer):
         return None
     
     async def set_state(self, code, state, ttl=3600):
-        """Save room state to Redis with TTL"""
         redis_conn = await self.get_redis()
-        # Convert sets to lists for JSON serialization
         state_copy = state.copy()
         if 'last_results_ack' in state_copy and isinstance(state_copy['last_results_ack'], set):
             state_copy['last_results_ack'] = list(state_copy['last_results_ack'])
-        await redis_conn.setex(
-            self.state_key(code),
-            ttl,
-            json.dumps(state_copy)
-        )
+        await redis_conn.setex(self.state_key(code), ttl, json.dumps(state_copy))
     
     async def delete_state(self, code):
-        """Delete room state from Redis"""
         redis_conn = await self.get_redis()
         await redis_conn.delete(self.state_key(code))
     
     async def get_redis_lock(self, code, timeout=10):
-        """Get distributed lock for room"""
         redis_conn = await self.get_redis()
-        return RedisLock(
-            redis_conn,
-            self.lock_key(code),
-            timeout=timeout,
-            blocking_timeout=timeout
-        )
+        return RedisLock(redis_conn, self.lock_key(code), timeout=timeout, blocking_timeout=timeout)
 
-    # --- DB helpers ---
+    # DB helpers
     @database_sync_to_async
-    def get_room(self, code):
-        return Room.objects.get(code=code)
+    def get_room(self, code): return Room.objects.get(code=code)
 
     @database_sync_to_async
     def increment_player_count(self, code):
@@ -108,13 +90,10 @@ class QuizConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_random_unused_question(self, used_ids):
         qs = Question.objects.exclude(id__in=used_ids)
-        if not qs.exists():
-            return Question.objects.order_by('?').first()
-        return qs.order_by('?').first()
+        if qs.exists():
+            return qs.order_by('?').first()
+        return Question.objects.order_by('?').first()
 
-    # -------------------------
-    # connect / disconnect
-    # -------------------------
     async def connect(self):
         self.code = self.scope['url_route']['kwargs']['code']
         self.room_group_name = f'quiz_{self.code}'
@@ -122,29 +101,22 @@ class QuizConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
-        # verify room exists
         try:
-            room = await self.get_room(self.code)
+            await self.get_room(self.code)
         except Exception:
             await self.send(json.dumps({'type': 'no_room'}))
             await self.close()
             return
 
-        # reject join if match already started
+        room = await self.get_room(self.code)
         if room.started:
-            await self.send(json.dumps({
-                'type': 'error',
-                'message': 'Match already started'
-            }))
+            await self.send(json.dumps({'type': 'error', 'message': 'Match already started'}))
             await self.close()
             return
 
-        # Use Redis lock to safely initialize/update state
         lock = await self.get_redis_lock(self.code)
         async with lock:
             state = await self.get_state(self.code)
-            
-            # Initialize state if not exists
             if state is None:
                 state = {
                     'question': None,
@@ -164,26 +136,20 @@ class QuizConsumer(AsyncWebsocketConsumer):
                     'last_results_by_label': None,
                     'last_results_ack': [],
                 }
-            
-            # Assign player slot
+
             used = set(state['channel_to_player'].values())
             if 'player1' not in used:
                 player = 'player1'
             elif 'player2' not in used:
                 player = 'player2'
             else:
-                await self.send(json.dumps({
-                    'type': 'error',
-                    'message': 'Room full'
-                }))
+                await self.send(json.dumps({'type': 'error', 'message': 'Room full'}))
                 await self.close()
                 return
-            
-            # Store mapping
+
             state['channel_to_player'][self.channel_name] = player
             await self.set_state(self.code, state)
 
-        # increment DB (outside lock)
         room = await self.increment_player_count(self.code)
 
         await self.send(json.dumps({
@@ -192,171 +158,121 @@ class QuizConsumer(AsyncWebsocketConsumer):
             'player_count': room.player_count,
         }))
 
-        # notify group
         await self.channel_layer.group_send(
             self.room_group_name,
             {'type': 'player.joined', 'player_label': player}
         )
 
-        # Send last result if exists
+        # Resend last result on reconnect
         lock = await self.get_redis_lock(self.code)
         async with lock:
             state = await self.get_state(self.code)
-            if state:
-                last = state.get('last_results_by_label')
-                last_ack = set(state.get('last_results_ack', []))
-                if last and player not in last_ack:
-                    res = last.get('results', {}).get(player)
+            if state and state.get('last_results_by_label'):
+                last = state['last_results_by_label']
+                ack = set(state.get('last_results_ack', []))
+                if player not in ack:
+                    res = last['results'].get(player, {})
                     payload = {
                         'type': 'result',
-                        'message': ("Time up! Correct: {}".format(last.get('correct_answer')) 
-                                   if (res and res.get('timed_out')) 
-                                   else f"Your answer: {res.get('your_answer')} {'✓' if res and res.get('is_correct') else '✗'}" 
-                                   if res else 'No result'),
-                        'scores': last.get('scores'),
-                        'question_num': last.get('question_num')
+                        'message': (f"Time up! Correct: {last.get('correct_answer')}"
+                                    if res.get('timed_out')
+                                    else f"Your answer: {res.get('your_answer')} {'✓' if res.get('is_correct') else '✗'}"),
+                        'scores': last['scores'],
+                        'question_num': last['question_num'],
+                        'correct_answer': last.get('correct_answer')
                     }
-                    try:
-                        await self.send(json.dumps(payload))
-                    except Exception:
-                        pass
-                    last_ack.add(player)
-                    state['last_results_ack'] = list(last_ack)
-                    await self.set_state(self.code, state)
+                    await self.send(json.dumps(payload))
 
-        # start match if ready
-        if room.player_count == 2:  # assuming 2 players
-            await self.mark_room_started(self.code)
-            await self.send_next_question()
+        # Start game when both joined
+        lock = await self.get_redis_lock(self.code)
+        async with lock:
+            state = await self.get_state(self.code)
+            if (state and len(state['channel_to_player']) == 2 and state.get('question') is None
+                and not state.get('timer_running') and not state.get('processed')):
+                await self.mark_room_started(self.code)
+                asyncio.create_task(self.send_next_question())
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        await self.decrement_player_count(self.code)
 
-        try:
-            await self.decrement_player_count(self.code)
-        except Exception:
-            pass
-
-        should_process = False
         lock = await self.get_redis_lock(self.code)
-        
         async with lock:
             state = await self.get_state(self.code)
             if not state:
                 return
-            
-            player_label = state['channel_to_player'].pop(self.channel_name, None)
-
-            # if in active snapshot, mark as auto-answered
-            if self.channel_name in state.get('active_players', []):
-                state['answered_flags'][self.channel_name] = True
-                state['auto_answered'][self.channel_name] = True
-                state['answers'][self.channel_name] = None
-                state['active_players'] = [ch for ch in state['active_players'] if ch != self.channel_name]
-
-            # check if all answered now
-            if not state.get('processing') and not state.get('processed'):
-                unanswered = [ch for ch in state.get('active_players', []) 
-                             if not state['answered_flags'].get(ch, False)]
-                if not unanswered and any(state.get('answered_flags', {}).values()):
-                    # mark processing
-                    state['processing'] = True
-                    state['timer_running'] = False
-                    should_process = True
-            
+            state['channel_to_player'].pop(self.channel_name, None)
             await self.set_state(self.code, state)
 
-            # notify group (inside lock is fine)
-            if player_label:
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {'type': 'player.left', 'player_label': player_label}
-                )
+        if not any(state.get('channel_to_player', {})):
+            await self.delete_state(self.code)
+            await self.mark_room_stopped(self.code)
 
-        # process outside lock
-        if should_process:
-            await self.process_answers()
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        if data.get('type') != 'answer':
+            return
 
-        # cleanup if empty
-        async with lock:
-            state = await self.get_state(self.code)
-            if state and not state['channel_to_player']:
-                await self.delete_state(self.code)
-                try:
-                    await self.mark_room_stopped(self.code)
-                except Exception:
-                    pass
-
-    # -------------------------
-    # Quiz flow
-    # -------------------------
-    async def send_next_question(self):
         lock = await self.get_redis_lock(self.code)
-        
         async with lock:
             state = await self.get_state(self.code)
-            if not state:
+            if not state or self.channel_name not in state.get('active_players', []):
+                return
+            if state['answered_flags'].get(self.channel_name):
                 return
 
-            # end condition
-            if state['question_num'] > 10:
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {'type': 'match.finished', 'scores': state['scores']}
-                )
+            state['answered_flags'][self.channel_name] = True
+            state['answers'][self.channel_name] = data['answer']
+            state['auto_answered'][self.channel_name] = False
+
+            answered_count = sum(state['answered_flags'].get(ch, False) for ch in state['active_players'])
+            if answered_count == state.get('expected_players', 2) and not state.get('processing') and not state.get('processed'):
+                state['processing'] = True
+                state['timer_running'] = False
+                await self.set_state(self.code, state)
+                asyncio.create_task(self.process_answers())  # Run outside lock
+
+            await self.set_state(self.code, state)
+
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {'type': 'player.answered', 'player_label': state['channel_to_player'].get(self.channel_name)}
+        )
+
+    async def send_next_question(self):
+        lock = await self.get_redis_lock(self.code)
+        async with lock:
+            state = await self.get_state(self.code)
+            if not state or state['question_num'] > 10:
+                await self.channel_layer.group_send(self.room_group_name, {'type': 'match.finished', 'scores': state['scores']})
                 await self.delete_state(self.code)
-                try:
-                    await self.mark_room_stopped(self.code)
-                except Exception:
-                    pass
                 return
 
             q = await self.get_random_unused_question(state['used_questions'])
-            if q is None:
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {'type': 'match.finished', 'scores': state['scores'], 'reason': 'no_questions'}
-                )
-                await self.delete_state(self.code)
-                try:
-                    await self.mark_room_stopped(self.code)
-                except Exception:
-                    pass
+            if not q:
+                await self.channel_layer.group_send(self.room_group_name, {'type': 'match.finished', 'scores': state['scores']})
                 return
 
             state['question'] = {'id': q.id, 'correct': getattr(q, 'correct', None)}
             state['used_questions'].append(q.id)
+            state['active_players'] = list(state['channel_to_player'].keys())
 
-            # snapshot players
-            active_players = list(state['channel_to_player'].keys())
-            state['active_players'] = active_players
+            snapshot = {pl: ch for ch, pl in state['channel_to_player'].items()}
+            snapshot.setdefault('player1', None)
+            snapshot.setdefault('player2', None)
+            state['player_label_snapshot'] = snapshot
 
-            # snapshot label->channel
-            plsnap = {}
-            for ch, pl in state['channel_to_player'].items():
-                plsnap[pl] = ch
-            plsnap.setdefault('player1', None)
-            plsnap.setdefault('player2', None)
-            state['player_label_snapshot'] = plsnap
-
-            state['expected_players'] = len(active_players)
-
-            # reset per-question state
-            state['answers'] = {ch: None for ch in active_players}
-            state['answered_flags'] = {ch: False for ch in active_players}
-            state['auto_answered'] = {ch: False for ch in active_players}
+            state['answers'] = {ch: None for ch in state['active_players']}
+            state['answered_flags'] = {ch: False for ch in state['active_players']}
+            state['auto_answered'] = {ch: False for ch in state['active_players']}
             state['processed'] = False
             state['processing'] = False
             state['timer_running'] = True
 
-            try:
-                question_payload = q.as_dict()
-            except Exception:
-                question_payload = {'id': q.id, 'text': getattr(q, 'text', None)}
+            question_payload = q.as_dict() if hasattr(q, 'as_dict') else {'text': q.text, 'a': q.a, 'b': q.b, 'c': q.c, 'd': q.d}
 
             await self.set_state(self.code, state)
 
-            # send to group
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -367,156 +283,59 @@ class QuizConsumer(AsyncWebsocketConsumer):
                 }
             )
 
-        # start timer outside lock
         asyncio.create_task(self.start_timer())
 
-    async def receive(self, text_data):
-        data = json.loads(text_data)
-        
-        if data.get('type') != 'answer':
-            return
-
-        should_process = False
+    async def start_timer(self):
+        await asyncio.sleep(30)
         lock = await self.get_redis_lock(self.code)
-        
         async with lock:
             state = await self.get_state(self.code)
-            if not state:
+            if not state or not state.get('timer_running'):
                 return
-
-            # already answered?
-            if state['answered_flags'].get(self.channel_name):
-                return
-
-            # ignore if not in snapshot
-            if self.channel_name not in state.get('active_players', []):
-                return
-
-            # record answer
-            state['answered_flags'][self.channel_name] = True
-            state['answers'][self.channel_name] = data.get('answer')
-            state['auto_answered'][self.channel_name] = False
-
-            # check if all answered
-            expected = state.get('expected_players', 0)
-            answered_count = sum(1 for ch in state.get('active_players', []) 
-                               if state['answered_flags'].get(ch))
-            
-            if answered_count >= expected and not state.get('processing') and not state.get('processed'):
-                state['processing'] = True
-                state['timer_running'] = False
-                should_process = True
-            
+            for ch in state['active_players']:
+                if not state['answered_flags'].get(ch):
+                    state['answered_flags'][ch] = True
+                    state['auto_answered'][ch] = True
+                    state['answers'][ch] = None
+            state['processing'] = True
+            state['timer_running'] = False
             await self.set_state(self.code, state)
-
-            # notify group
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'player.answered',
-                    'player_label': state['channel_to_player'].get(self.channel_name)
-                }
-            )
-
-        # process outside lock
-        if should_process:
-            await self.process_answers()
-
-    async def start_timer(self):
-        try:
-            await asyncio.sleep(30)
-            
-            should_process = False
-            lock = await self.get_redis_lock(self.code)
-            
-            async with lock:
-                state = await self.get_state(self.code)
-                if not state:
-                    return
-                
-                # check if timer is still valid
-                if not state.get('timer_running'):
-                    return
-                
-                # only trigger if not already processing/processed
-                if not state.get('processing') and not state.get('processed'):
-                    # mark all unanswered as timed out
-                    for ch in list(state.get('active_players', [])):
-                        if not state['answered_flags'].get(ch):
-                            state['answered_flags'][ch] = True
-                            state['auto_answered'][ch] = True
-                            state['answers'][ch] = None
-                    
-                    state['processing'] = True
-                    state['timer_running'] = False
-                    should_process = True
-                    
-                    await self.set_state(self.code, state)
-            
-            if should_process:
-                await self.process_answers()
-                
-        except asyncio.CancelledError:
-            return
-        except Exception as e:
-            print(f"Timer error: {e}")
-            return
+            asyncio.create_task(self.process_answers())
 
     async def process_answers(self):
         lock = await self.get_redis_lock(self.code)
-        
         async with lock:
             state = await self.get_state(self.code)
-            if not state:
+            if not state or state.get('processed'):
                 return
 
-            # double-check processed flag
-            if state.get('processed'):
-                state['processing'] = False
-                await self.set_state(self.code, state)
-                return
-            
-            # mark as processed immediately
             state['processed'] = True
+            state['processing'] = False
+            await self.set_state(self.code, state)
 
             q = state.get('question')
-            if q is None:
-                state['processing'] = False
-                await self.set_state(self.code, state)
+            if not q:
                 return
-
             correct = q.get('correct')
 
             results_by_label = {}
             results_by_channel = {}
-            plsnap = state.get('player_label_snapshot', {})
+            snapshot = state.get('player_label_snapshot', {})
 
-            # build results
             for pl in ('player1', 'player2'):
-                ch = plsnap.get(pl)
-                if ch is None:
-                    results_by_label[pl] = {
-                        'your_answer': None,
-                        'is_correct': False,
-                        'timed_out': True
-                    }
-                    continue
-                
-                ans = state.get('answers', {}).get(ch)
-                timed_out = state.get('auto_answered', {}).get(ch, False)
-                is_correct = (ans == correct) and (not timed_out) and (correct is not None)
-                
-                if is_correct:
-                    state['scores'][pl] = state['scores'].get(pl, 0) + 1
-                
-                results_by_label[pl] = {
-                    'your_answer': ans,
-                    'is_correct': is_correct,
-                    'timed_out': timed_out
-                }
-                results_by_channel[ch] = results_by_label[pl]
+                ch = snapshot.get(pl)
+                ans = state['answers'].get(ch) if ch else None
+                timed_out = state['auto_answered'].get(ch, False) if ch else True
+                is_correct = (ans == correct and not timed_out and correct is not None)
 
-            # store for reconnect
+                if is_correct and ch:
+                    state['scores'][pl] = state['scores'].get(pl, 0) + 1
+
+                res = {'your_answer': ans, 'is_correct': is_correct, 'timed_out': timed_out}
+                results_by_label[pl] = res
+                if ch:
+                    results_by_channel[ch] = res
+
             state['last_results_by_label'] = {
                 'results': results_by_label,
                 'correct_answer': correct,
@@ -524,20 +343,9 @@ class QuizConsumer(AsyncWebsocketConsumer):
                 'question_num': state['question_num']
             }
             state['last_results_ack'] = []
-
-            # increment question number
             state['question_num'] += 1
-            state['processing'] = False
-            
             await self.set_state(self.code, state)
 
-            # debug
-            try:
-                print(f"[DEBUG] process_answers room={self.code} qnum={state['question_num']-1} scores={state['scores']}")
-            except Exception:
-                pass
-
-            # broadcast (can be outside critical section)
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -550,88 +358,68 @@ class QuizConsumer(AsyncWebsocketConsumer):
                 }
             )
 
-        # delay before next question (outside lock)
         await asyncio.sleep(3)
         await self.send_next_question()
 
-    # -------------------------
-    # Group handlers
-    # -------------------------
     async def show_result(self, event):
         results_by_channel = event.get('results_by_channel', {})
         results_by_label = event.get('results_by_label', {})
+        correct_answer = event.get('correct_answer')
+        scores = event.get('scores')
+        question_num = event.get('question_num')
 
-        # try channel lookup first
+        base_payload = {
+            'type': 'result',
+            'scores': scores,
+            'question_num': question_num,
+            'correct_answer': correct_answer
+        }
+
+        sent = False
+        player_label = None
+
         r = results_by_channel.get(self.channel_name)
         if r:
-            msg = (f"Time up! Correct: {event.get('correct_answer')}" 
-                   if r['timed_out'] 
-                   else f"Your answer: {r['your_answer']} {'✓' if r['is_correct'] else '✗'}")
-            await self.send(json.dumps({
-                'type': 'result',
-                'message': msg,
-                'scores': event.get('scores'),
-                'question_num': event.get('question_num')
-            }))
-            
-            # ack in Redis
-            lock = await self.get_redis_lock(self.code)
-            async with lock:
-                state = await self.get_state(self.code)
-                if state:
-                    pl = state.get('channel_to_player', {}).get(self.channel_name)
-                    if pl:
-                        ack_set = set(state.get('last_results_ack', []))
-                        ack_set.add(pl)
-                        state['last_results_ack'] = list(ack_set)
-                        await self.set_state(self.code, state)
-            return
+            msg = (f"Time up! Correct: {correct_answer}" if r.get('timed_out')
+                   else f"Your answer: {r.get('your_answer')} {'✓' if r.get('is_correct') else '✗'}")
+            await self.send(json.dumps({**base_payload, 'message': msg}))
+            sent = True
 
-        # find by player label
-        lock = await self.get_redis_lock(self.code)
-        async with lock:
-            state = await self.get_state(self.code)
-            if not state:
-                return
-            
-            player_label = state.get('channel_to_player', {}).get(self.channel_name)
-            if not player_label:
-                plsnap = state.get('player_label_snapshot', {})
-                for pl, ch in plsnap.items():
-                    if ch == self.channel_name:
-                        player_label = pl
-                        break
-
-        if player_label:
-            r2 = results_by_label.get(player_label)
-            if r2:
-                msg = (f"Time up! Correct: {event.get('correct_answer')}" 
-                       if r2['timed_out'] 
-                       else f"Your answer: {r2['your_answer']} {'✓' if r2['is_correct'] else '✗'}")
-                await self.send(json.dumps({
-                    'type': 'result',
-                    'message': msg,
-                    'scores': event.get('scores'),
-                    'question_num': event.get('question_num')
-                }))
-                
+        if not sent:
+            try:
+                lock = await self.get_redis_lock(self.code)
                 async with lock:
                     state = await self.get_state(self.code)
                     if state:
-                        ack_set = set(state.get('last_results_ack', []))
-                        ack_set.add(player_label)
-                        state['last_results_ack'] = list(ack_set)
-                        await self.set_state(self.code, state)
-                return
+                        player_label = state['channel_to_player'].get(self.channel_name)
+                        if not player_label:
+                            snapshot = state.get('player_label_snapshot', {})
+                            player_label = next((pl for pl, ch in snapshot.items() if ch == self.channel_name), None)
 
-        # fallback
-        await self.send(json.dumps({
-            'type': 'result',
-            'message': 'Result (generic):',
-            'results_by_label': results_by_label,
-            'scores': event.get('scores'),
-            'question_num': event.get('question_num')
-        }))
+                        if player_label and player_label in results_by_label:
+                            r2 = results_by_label[player_label]
+                            msg = (f"Time up! Correct: {correct_answer}" if r2.get('timed_out')
+                                   else f"Your answer: {r2.get('your_answer')} {'✓' if r2.get('is_correct') else '✗'}")
+                            await self.send(json.dumps({**base_payload, 'message': msg}))
+                            sent = True
+            except Exception as e:
+                logger.error(f"Label lookup error: {e}")
+
+        if not sent:
+            await self.send(json.dumps({**base_payload, 'message': 'Kết quả đã cập nhật'}))
+
+        if player_label:
+            try:
+                lock = await self.get_redis_lock(self.code)
+                async with lock:
+                    state = await self.get_state(self.code)
+                    if state:
+                        ack = set(state.get('last_results_ack', []))
+                        ack.add(player_label)
+                        state['last_results_ack'] = list(ack)
+                        await self.set_state(self.code, state)
+            except Exception as e:
+                logger.error(f"Ack failed: {e}")
 
     async def start_quiz(self, event):
         await self.send(json.dumps({
@@ -642,25 +430,10 @@ class QuizConsumer(AsyncWebsocketConsumer):
         }))
 
     async def match_finished(self, event):
-        payload = {'type': 'finished', 'scores': event.get('scores')}
-        if event.get('reason'):
-            payload['reason'] = event.get('reason')
-        await self.send(json.dumps(payload))
+        await self.send(json.dumps({'type': 'finished', 'scores': event.get('scores')}))
 
     async def player_answered(self, event):
-        await self.send(json.dumps({
-            'type': 'player_answered',
-            'player_label': event['player_label']
-        }))
+        await self.send(json.dumps({'type': 'player_answered', 'player_label': event['player_label']}))
 
     async def player_joined(self, event):
-        await self.send(json.dumps({
-            'type': 'player_joined',
-            'player_label': event['player_label']
-        }))
-
-    async def player_left(self, event):
-        await self.send(json.dumps({
-            'type': 'player_left',
-            'player_label': event['player_label']
-        }))
+        await self.send(json.dumps({'type': 'player_joined', 'player_label': event['player_label']}))
