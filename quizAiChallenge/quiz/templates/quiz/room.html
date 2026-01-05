@@ -10,13 +10,15 @@
       color: #e5e7eb;
       text-align: center;
       padding: 20px;
+      margin: 0;
+      min-height: 100vh;
     }
     .box {
       background: #020617;
       border-radius: 10px;
       padding: 20px;
       max-width: 520px;
-      margin: auto;
+      margin: 40px auto;
       box-shadow: 0 0 15px rgba(0,0,0,.6);
     }
     h2 { margin-bottom: 10px; }
@@ -32,91 +34,84 @@
       border-radius: 8px;
       cursor: pointer;
       font-size: 16px;
+      transition: all 0.3s;
+      font-weight: 500;
+      border: 2px solid transparent;
+    }
+    .option:hover:not(:disabled) {
+      background: #334155;
     }
     .option:disabled {
-      opacity: 0.4;
+      opacity: 0.6;
       cursor: not-allowed;
     }
 
-    #timer {
-      font-size: 18px;
-      margin: 10px 0;
-      color: #38bdf8;
-    }
+    .correct { background: #22c55e !important; color: white !important; border-color: #16a34a !important; }
+    .wrong { background: #ef4444 !important; color: white !important; border-color: #dc2626 !important; }
+    .selected { border: 3px solid #60a5fa !important; box-shadow: 0 0 12px #60a5fa; }
 
-    #result {
-      margin-top: 10px;
-      font-size: 18px;
-      min-height: 26px;
-    }
-
-    #opponent {
-      color: orange;
-      min-height: 22px;
-      margin-top: 5px;
-    }
-
-    #scores {
-      margin-top: 15px;
-      font-size: 16px;
-      display: none;
-    }
-
-    .hidden {
-      display: none;
-    }
+    #timer { font-size: 18px; margin: 15px 0; color: #38bdf8; }
+    #result { margin-top: 15px; font-size: 19px; min-height: 30px; font-weight: bold; color: #fbbf24; }
+    #opponent { color: #fb923c; min-height: 22px; margin: 8px 0; font-weight: bold; }
+    #scores { margin-top: 20px; font-size: 18px; display: none; font-weight: bold; color: #a3e635; }
+    .debug { font-size: 11px; color: #64748b; margin-top: 15px; }
   </style>
 </head>
 <body>
 
 <div class="box">
-  <h2>Quiz Battle</h2>
+  <h2>Quiz Battle 🎯</h2>
 
   <div>Room Code: <b id="room"></b></div>
   <div>Your role: <b id="player">-</b></div>
 
   <hr>
 
-  <div id="question">Waiting for players...</div>
-  <div id="timer"></div>
+  <div id="question" aria-live="assertive">Waiting for players...</div>
+  <div id="timer" aria-live="polite"></div>
 
   <button class="option" id="btnA" onclick="sendAnswer('A')"></button>
   <button class="option" id="btnB" onclick="sendAnswer('B')"></button>
   <button class="option" id="btnC" onclick="sendAnswer('C')"></button>
   <button class="option" id="btnD" onclick="sendAnswer('D')"></button>
 
-  <div id="opponent"></div>
-  <div id="result"></div>
+  <div id="opponent" aria-live="polite"></div>
+  <div id="result" aria-live="polite"></div>
   <div id="scores"></div>
+  
+  <div class="debug" id="debug">Connecting...</div>
 </div>
 
 <script>
-/* ================= STATE ================= */
 const roomCode = window.location.pathname.split("/").filter(Boolean).pop();
-document.getElementById("room").innerText = roomCode;
+document.getElementById("room").innerText = roomCode || "Unknown";
 
 let socket;
 let myPlayer = null;
 let currentQuestionNum = 0;
 let timerInterval = null;
 let answered = false;
+let myAnswer = null;
 
-/* ================= CONNECT ================= */
+function debug(msg) {
+  console.log("Debug: " + msg);
+  document.getElementById("debug").innerText = msg;
+}
+
 function connect() {
-  socket = new WebSocket(`ws://${window.location.host}/ws/quiz/${roomCode}/`);
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  socket = new WebSocket(`${protocol}//${window.location.host}/ws/quiz/${roomCode}/`);
 
-  socket.onopen = () => {
-    console.log("✅ WS connected");
-  };
+  socket.onopen = () => debug("Connected");
 
   socket.onmessage = (e) => {
     const data = JSON.parse(e.data);
-    console.log("⬇️ WS:", data);
+    console.log("WS:", data);
 
     switch (data.type) {
       case "joined":
         myPlayer = data.player_label;
-        document.getElementById("player").innerText = myPlayer;
+        document.getElementById("player").innerText = myPlayer.toUpperCase();
         break;
 
       case "start":
@@ -124,15 +119,16 @@ function connect() {
         break;
 
       case "player_answered":
-        if (data.player_label !== myPlayer) {
-          document.getElementById("opponent").innerText =
-            "⚡ Đối thủ đã trả lời";
+        if (data.player_label !== myPlayer && !answered) {
+          document.getElementById("opponent").innerText = "⚡ Đối thủ đã trả lời!";
         }
         break;
 
       case "result":
-        if (data.question_num !== currentQuestionNum) return;
-        showResult(data);
+        if (data.question_num >= currentQuestionNum) {
+          currentQuestionNum = data.question_num;
+          showResult(data);
+        }
         break;
 
       case "finished":
@@ -142,77 +138,112 @@ function connect() {
   };
 
   socket.onclose = () => {
-    console.warn("❌ WS closed");
+    debug("Disconnected - reconnecting...");
+    setTimeout(connect, 3000);
   };
 }
 
-/* ================= QUESTION ================= */
 function startQuestion(data) {
   currentQuestionNum = data.question_num;
   answered = false;
+  myAnswer = null;
 
   clearInterval(timerInterval);
 
-  document.getElementById("question").innerText =
-    `Q${data.question_num}: ${data.question.text}`;
+  document.getElementById("question").innerText = `Câu ${data.question_num}: ${data.question.text}`;
 
-  setBtn("A", data.question.a);
-  setBtn("B", data.question.b);
-  setBtn("C", data.question.c);
-  setBtn("D", data.question.d);
+  ["A","B","C","D"].forEach(l => {
+    setBtn(l, data.question[l.toLowerCase()] || "");
+    const btn = document.getElementById("btn" + l);
+    btn.classList.remove("correct", "wrong", "selected");
+  });
 
   document.getElementById("result").innerText = "";
   document.getElementById("opponent").innerText = "";
   document.getElementById("scores").style.display = "none";
 
   enableButtons(true);
-  startTimer(data.timer);
+  startTimer(data.timer || 30);
 }
 
-/* ================= TIMER ================= */
 function startTimer(seconds) {
   let time = seconds;
   document.getElementById("timer").innerText = `⏱ ${time}s`;
-
   timerInterval = setInterval(() => {
     time--;
     document.getElementById("timer").innerText = `⏱ ${time}s`;
-
     if (time <= 0) {
       clearInterval(timerInterval);
+      document.getElementById("timer").innerText = "⏰ Hết giờ!";
       enableButtons(false);
+      if (!answered) {
+        myAnswer = null; // Timed out
+        document.getElementById("result").innerText = "⏳ Đang xử lý...";
+      }
     }
   }, 1000);
 }
 
-/* ================= ANSWER ================= */
 function sendAnswer(letter) {
   if (answered) return;
+
   answered = true;
+  myAnswer = letter;
+
+  clearInterval(timerInterval);
+  document.getElementById("timer").innerText = "⏳ Đang chờ...";
+
+  // Immediate selection highlight
+  ["A","B","C","D"].forEach(l => document.getElementById("btn" + l).classList.remove("selected"));
+  document.getElementById("btn" + letter).classList.add("selected");
+
+  document.getElementById("result").innerText = "⏳ Chờ kết quả...";
+  document.getElementById("opponent").innerText = "";
 
   enableButtons(false);
 
-  socket.send(JSON.stringify({
-    type: "answer",
-    answer: letter
-  }));
-
-  document.getElementById("result").innerText = "⏳ Chờ đối thủ...";
+  socket.send(JSON.stringify({ type: "answer", answer: letter }));
 }
 
-/* ================= RESULT (PER QUESTION) ================= */
 function showResult(data) {
   clearInterval(timerInterval);
+  document.getElementById("timer").innerText = "";
 
-  document.getElementById("result").innerText = data.message;
-  document.getElementById("scores").innerText =
-    `Score → Player1: ${data.scores.player1} | Player2: ${data.scores.player2}`;
+  // Update scores
+  document.getElementById("scores").innerText = 
+    `Điểm → Player1: ${data.scores.player1} | Player2: ${data.scores.player2}`;
   document.getElementById("scores").style.display = "block";
 
-  enableButtons(false);
+  document.getElementById("opponent").innerText = "";
+
+  const correctLetter = data.correct_answer;
+
+  // Highlight correct answer
+  if (correctLetter) {
+    const correctBtn = document.getElementById("btn" + correctLetter);
+    if (correctBtn) correctBtn.classList.add("correct");
+  }
+
+  // Handle player's answer
+  let resultMsg = data.message || "";
+  if (myAnswer) {
+    const playerBtn = document.getElementById("btn" + myAnswer);
+    if (myAnswer === correctLetter) {
+      playerBtn.classList.remove("selected");
+      playerBtn.classList.add("correct");
+      resultMsg = "✅ Đúng rồi! +1 điểm";
+    } else {
+      playerBtn.classList.remove("selected");
+      playerBtn.classList.add("wrong");
+      resultMsg = "❌ Sai rồi...";
+    }
+  } else {
+    resultMsg = "⏰ Hết giờ! Đáp án đúng: " + correctLetter;
+  }
+
+  document.getElementById("result").innerText = resultMsg;
 }
 
-/* ================= FINAL RESULT ================= */
 function showFinalResult(data) {
   clearInterval(timerInterval);
   enableButtons(false);
@@ -221,32 +252,30 @@ function showFinalResult(data) {
   const p2 = data.scores.player2;
 
   let winner = "🤝 HÒA";
-  if (p1 > p2) winner = "🏆 PLAYER 1 THẮNG";
-  else if (p2 > p1) winner = "🏆 PLAYER 2 THẮNG";
+  if (p1 > p2) winner = myPlayer === "player1" ? "🏆 BẠN THẮNG!" : "🏆 PLAYER 1 THẮNG";
+  else if (p2 > p1) winner = myPlayer === "player2" ? "🏆 BẠN THẮNG!" : "🏆 PLAYER 2 THẮNG";
 
-  document.getElementById("question").innerText = "🏁 KẾT THÚC TRẬN ĐẤU";
+  document.getElementById("question").innerText = "🏁 TRẬN ĐẤU KẾT THÚC";
   document.getElementById("timer").innerText = "";
   document.getElementById("opponent").innerText = "";
 
   document.getElementById("result").innerText = winner;
-  document.getElementById("scores").innerText =
-    `FINAL SCORE → Player1: ${p1} | Player2: ${p2}`;
+  document.getElementById("result").style.color = p1 !== p2 ? "#22c55e" : "#fbbf24";
+  document.getElementById("result").style.fontSize = "24px";
+
+  document.getElementById("scores").innerText = 
+    `KẾT QUẢ CUỐI → Player1: ${p1} | Player2: ${p2}`;
   document.getElementById("scores").style.display = "block";
 }
 
-/* ================= UTILS ================= */
 function setBtn(letter, text) {
-  document.getElementById("btn" + letter).innerText =
-    `${letter}. ${text}`;
+  document.getElementById("btn" + letter).innerText = `${letter}. ${text || "(trống)"}`;
 }
 
 function enableButtons(enable) {
-  ["A","B","C","D"].forEach(l => {
-    document.getElementById("btn" + l).disabled = !enable;
-  });
+  ["A","B","C","D"].forEach(l => document.getElementById("btn" + l).disabled = !enable);
 }
 
-/* ================= START ================= */
 connect();
 </script>
 
