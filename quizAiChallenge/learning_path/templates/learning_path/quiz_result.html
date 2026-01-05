@@ -1,10 +1,25 @@
-<h2>Kết quả {{ quiz.title }}</h2>
-<p>Điểm: {{ score }}/{{ quiz.questions_for_quiz.count }}</p>
-<p>Tỉ lệ đúng: {{ percent }}%</p>
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/result.css' %}">
 
-{% if passed %}
-    <p style="color:green;">Bạn đã vượt qua! Phần tiếp theo đã được mở khóa.</p>
-{% else %}
-    <p style="color:red;">Bạn chưa đạt, hãy thử lại với bộ đề mới.</p>
-    <a href="{% url 'learning_path:quiz_start' quiz.id %}">Làm lại</a>
-{% endif %}
+{% block title %}Kết quả Quiz{% endblock %}
+
+{% block content %}
+<section class="container result-section">
+  <h2>{{ quiz.title }}</h2>
+  <p>Điểm: {{ score }}/{{ quiz.questions_for_quiz.count }}</p>
+  <p>Tỉ lệ đúng: {{ percent }}%</p>
+
+  {% if passed %}
+    <p class="result-success">✅ Bạn đã vượt qua! Phần tiếp theo đã được mở khóa.</p>
+  {% else %}
+    <p class="result-fail">❌ Bạn chưa đạt yêu cầu, hãy thử lại với bộ đề mới.</p>
+    <a href="{% url 'learning_path:learning_path'%}">
+      <button>Làm lại</button>
+    </a>
+  {% endif %}
+
+  <a href="{% url 'learning_path:learning_path' %}">
+    <button>Quay lại lộ trình</button>
+  </a>
+</section>
+{% endblock %}

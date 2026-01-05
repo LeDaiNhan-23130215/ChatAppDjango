@@ -13,40 +13,60 @@
             <h1>ARE YOU READY FOR THE CHALLENGE?</h1>
             <div class="challenge-cards-container">
 
-                <a class="ai-challenge-link" href="ai-challenge.html">
+                <a class="ai-challenge-link" href="{% url 'quiz_ai_battle:start_match' %}">
                     <div class="challenge-card user-challenge">
                         <h3 class="card-title">
                             <div><span>AI Challenge</span></div>
-                            <img class="challenge-img" src="img/ai challenge.jpg" alt="#">
+                            <img class="challenge-img" src="{% static 'img/ai challenge.jpg' %}" alt="#">
                         </h3>
                     </div>
                 </a>
 
-                <a class="user-challenge-link" href="user-challenge.html">
+                <a class="user-challenge-link" href="{% url 'quiz_home' %}">
                     <div class="challenge-card ai-challenge">
                         <h3 class="card-title">
                             <div><span>User Challenge</span></div>
-                            <img class="challenge-img" src="img/user challenge.jpg" alt="#">
+                            <img class="challenge-img" src="{% static 'img/user challenge.jpg' %}" alt="#">
                         </h3>
                     </div>
                 </a>
             </div>
         </section>
 
-  <section id="dashboard-summary" class="container">
+        <section id="dashboard-summary" class="container">
             <div class="card progress-tracking">
-                <h2>Tiến độ của Tôi</h2>
-                <p>Điểm cao nhất: 1250</p>
-                <div class="progress">
-                    <p>Mức độ hoàn thành bài tập</p>
-                    <div class="progress-bar-container">
-                        <div>
-                            <p>70%</p>
+                <h2>Tiến độ của tôi</h2>
+
+                {% if path %}
+                    <p>Mục tiêu điểm: {{ path.target_score }}</p>
+
+                    <div class="progress">
+                        <p>Mức độ hoàn thành lộ trình</p>
+
+                        <div class="progress-bar-container">
+                            <div class="progress-bar"
+                                style="width: {{ progress }}%;">
+                                <span>{{ progress }}%</span>
+                            </div>
                         </div>
+
+                        <p class="progress-meta">
+                            Hoàn thành {{ path.get_completed_items }} /
+                            {{ path.get_total_items }} bài học
+                        </p>
                     </div>
-                </div>
-                <div class="viewall"> <a href="#progress-tracking"><button>Xem chi tiết</button></a>
-                </div>
+
+                    <div class="viewall">
+                        <a href="{% url 'learning_path:learning_path' %}">
+                            <button>Xem chi tiết</button>
+                        </a>
+                    </div>
+                {% else %}
+                    <p>Bạn chưa có lộ trình học.</p>
+                    <a href="{% url 'entrance_test:intro' %}">
+                        <button>Làm bài đánh giá đầu vào</button>
+                    </a>
+                {% endif %}
             </div>
             <div class="card leaderboard-snippet">
                 <h2>Bảng Xếp Hạng Top 3</h2>

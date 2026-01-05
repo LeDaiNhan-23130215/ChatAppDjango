@@ -1,0 +1,16 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/result.css' %}">
+
+{% block title %}Kết quả Bài học{% endblock %}
+
+{% block content %}
+<section class="container">
+  <h2>{{ lesson.title }}</h2>
+  {% if completed %}
+    <p>✅ Bạn đã hoàn thành bài học này!</p>
+  {% else %}
+    <p>❌ Bài học chưa được hoàn thành.</p>
+  {% endif %}
+  <a href="{% url 'learning_path:learning_path' %}"><button>Quay lại lộ trình</button></a>
+</section>
+{% endblock %}

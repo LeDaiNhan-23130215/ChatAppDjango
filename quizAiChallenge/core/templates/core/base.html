@@ -28,7 +28,7 @@
         </nav>
         <div class="user-controls">
             {% if user.is_authenticated %}
-                <span>Xin chào {{ user.username }}</span>
+                <span>Xin chào <b>{{ user.username }}</b></span>
                 <a href="{% url 'logout' %}">Đăng xuất</a>
             {% else %}
                 <a href="{% url 'login' %}">Đăng nhập / Đăng ký</a>

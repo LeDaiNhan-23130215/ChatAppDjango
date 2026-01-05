@@ -24,6 +24,21 @@ class LearningPath(models.Model):
     def __str__(self):
         return f'Learning Path - {self.user}'
     
+    def get_total_items(self):
+        return self.items.count()
+    
+    def get_completed_items(self):
+        return self.items.filter(
+            status = LearningPathItemStatus.COMPLETED
+        ).count()
+    
+    def get_progress_percent(self):
+        total = self.get_total_items()
+        if(total == 0):
+            return 0
+        completed_items = self.get_completed_items()
+        return int((completed_items / total) * 100)
+    
 class LearningPathItem(models.Model):
     TYPE_CHOICES = [
         ('LESSON', 'Lesson'),

@@ -1,0 +1,18 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/result.css' %}">
+
+{% block title %}Kết quả Mock Exam{% endblock %}
+
+{% block content %}
+<section class="container">
+  <h2>{{ mock.title }}</h2>
+  <p>Điểm: {{ score }}/{{ mock.questions_for_quiz.count }}</p>
+  <p>Tỉ lệ đúng: {{ percent }}%</p>
+  {% if passed %}
+    <p>Bạn đã vượt qua Mock Exam!</p>
+  {% else %}
+    <p>Bạn chưa đạt yêu cầu, hãy ôn tập thêm.</p>
+  {% endif %}
+  <a href="{% url 'learning_path:learning_path' %}"><button>Quay lại lộ trình</button></a>
+</section>
+{% endblock %}

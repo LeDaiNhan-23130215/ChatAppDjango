@@ -27,10 +27,12 @@ def learning_path_view(req):
         .prefetch_related('items')
         .first()
     )
-    items = path.items.all() if path else []
-    return render(req, 'learning_path/learning_path.html', {
-        'items': items
-    })
+    context = {
+        "path": path,
+        "items": path.items.all(),
+        "progress": path.get_progress_percent(),
+    }
+    return render(req, 'learning_path/learning_path.html', context)
 
 @login_required
 def learning_path_item_view(req, item_id):
@@ -123,6 +125,100 @@ def quiz_submit_view(req, quiz_id):
 
     return redirect('learning_path:quiz_start', quiz_id=quiz.id)
 
+@login_required
+def lesson_complete_view(req, lesson_id):
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    try:
+        item = LearningPathItem.objects.get(object_id=lesson.id, path__user=req.user)
+        complete_item(item, user=req.user)
+    except LearningPathItem.DoesNotExist:
+        pass
+    return redirect('learning_path:detail')
+
+@login_required
+def mock_exam_submit_view(req, mock_id):
+    mock = get_object_or_404(Quiz, id=mock_id, quiz_type="MOCK")
+
+    if req.method == 'POST':
+        score = 0
+        total = mock.questions_for_quiz.count()
+        for question in mock.questions_for_quiz.all():
+            selected_choice_id = req.POST.get(f"q{question.id}")
+            if selected_choice_id:
+                choice = Choice.objects.get(id=selected_choice_id)
+                if choice.is_correct:
+                    score += 1
+
+        percent = (score / total) * 100 if total > 0 else 0
+        passed = percent >= mock.pass_score
+
+        QuizResult.objects.create(
+            user=req.user,
+            quiz=mock,
+            score=score,
+            percent=percent,
+            passed=passed
+        )
+
+        if passed:
+            try:
+                item = LearningPathItem.objects.get(
+                    object_id=mock.id,
+                    path__user=req.user,
+                    item_type="MOCK"
+                )
+                complete_item(item, user=req.user)
+            except LearningPathItem.DoesNotExist:
+                pass
+
+        return redirect('learning_path:mock_exam_result', mock_id=mock.id)
+
+    return redirect('learning_path:mock_exam_start', mock_id=mock.id)
+
+@login_required
+def practice_submit_view(req, practice_id):
+    practice = get_object_or_404(Quiz, id=practice_id, quiz_type="PRACTICE")
+
+    if req.method == 'POST':
+        score = 0
+        total = practice.questions_for_quiz.count()
+        for question in practice.questions_for_quiz.all():
+            selected_choice_id = req.POST.get(f"q{question.id}")
+            if selected_choice_id:
+                choice = Choice.objects.get(id=selected_choice_id)
+                if choice.is_correct:
+                    score += 1
+
+        percent = (score / total) * 100 if total > 0 else 0
+        passed = percent >= practice.pass_score
+
+        QuizResult.objects.create(
+            user=req.user,
+            quiz=practice,
+            score=score,
+            percent=percent,
+            passed=passed
+        )
+
+        if passed:
+            try:
+                item = LearningPathItem.objects.get(
+                    object_id=practice.id,
+                    path__user=req.user,
+                    item_type="PRACTICE"
+                )
+                complete_item(item, user=req.user)
+            except LearningPathItem.DoesNotExist:
+                pass
+
+        req.session['practice_result'] = {
+            'score': score,
+            'percent': percent,
+            'passed': passed
+        }
+        return redirect('learning_path:practice_result', practice_id=practice.id)
+
+    return redirect('learning_path:practice_start', practice_id=practice.id)
 
 @login_required
 def quiz_result_view(req, quiz_id):
@@ -133,6 +229,50 @@ def quiz_result_view(req, quiz_id):
 
     return render(req, "learning_path/quiz_result.html", {
         "quiz": quiz,
+        "score": result['score'],
+        "percent": result['percent'],
+        "passed": result['passed']
+    })
+
+@login_required
+def lesson_result_view(req, lesson_id):
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    # Có thể check session hoặc trực tiếp check trạng thái item
+    try:
+        item = LearningPathItem.objects.get(object_id=lesson.id, path__user=req.user, item_type="LESSON")
+        completed = item.status == "COMPLETED"
+    except LearningPathItem.DoesNotExist:
+        completed = False
+
+    return render(req, "learning_path/lesson_result.html", {
+        "lesson": lesson,
+        "completed": completed
+    })
+
+@login_required
+def practice_result_view(req, practice_id):
+    practice = get_object_or_404(Quiz, id=practice_id, quiz_type="PRACTICE")
+    result = req.session.get('practice_result')
+    if not result:
+        return redirect('learning_path:practice_start', practice_id=practice.id)
+
+    return render(req, "learning_path/practice_result.html", {
+        "practice": practice,
+        "score": result['score'],
+        "percent": result['percent'],
+        "passed": result['passed']
+    })
+
+@login_required
+def mock_exam_result_view(req, mock_id):
+    mock = get_object_or_404(Quiz, id=mock_id, quiz_type="MOCK")
+    # Có thể lấy kết quả gần nhất từ DB thay vì session
+    result = QuizResult.objects.filter(user=req.user, quiz=mock).order_by('-created_at').first()
+    if not result:
+        return redirect('learning_path:mock_exam_start', mock_id=mock.id)
+
+    return render(req, "learning_path/mock_exam_result.html", {
+        "mock": mock,
         "score": result['score'],
         "percent": result['percent'],
         "passed": result['passed']
