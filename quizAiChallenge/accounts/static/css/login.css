@@ -112,8 +112,7 @@ body {
 }
 
 .field-input input:focus {
-    border-color: red;
-    background-color: #333;
+    border-color: blue;
 }
 
 .login-option {
