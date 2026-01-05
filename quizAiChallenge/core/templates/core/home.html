@@ -9,13 +9,29 @@
 
 {% block content %}
 
-<section id="home" class="hero-section">
-    <h1>Sẵn sàng cho Thách thức AI?</h1>
-    <p>Kiểm tra kiến thức và tốc độ của bạn!</p>
-    <a href="{% url 'quiz_ai_battle:start_match' %}" class="cta-button">
-        Bắt Đầu Thử Thách AI
-    </a>
-</section>
+  <section id="home" class="hero-section">
+            <h1>ARE YOU READY FOR THE CHALLENGE?</h1>
+            <div class="challenge-cards-container">
+
+                <a class="ai-challenge-link" href="ai-challenge.html">
+                    <div class="challenge-card user-challenge">
+                        <h3 class="card-title">
+                            <div><span>AI Challenge</span></div>
+                            <img class="challenge-img" src="img/ai challenge.jpg" alt="#">
+                        </h3>
+                    </div>
+                </a>
+
+                <a class="user-challenge-link" href="user-challenge.html">
+                    <div class="challenge-card ai-challenge">
+                        <h3 class="card-title">
+                            <div><span>User Challenge</span></div>
+                            <img class="challenge-img" src="img/user challenge.jpg" alt="#">
+                        </h3>
+                    </div>
+                </a>
+            </div>
+        </section>
 
   <section id="dashboard-summary" class="container">
             <div class="card progress-tracking">
