@@ -1,0 +1,10 @@
+<h2>Kết quả {{ quiz.title }}</h2>
+<p>Điểm: {{ score }}/{{ quiz.questions_for_quiz.count }}</p>
+<p>Tỉ lệ đúng: {{ percent }}%</p>
+
+{% if passed %}
+    <p style="color:green;">Bạn đã vượt qua! Phần tiếp theo đã được mở khóa.</p>
+{% else %}
+    <p style="color:red;">Bạn chưa đạt, hãy thử lại với bộ đề mới.</p>
+    <a href="{% url 'learning_path:quiz_start' quiz.id %}">Làm lại</a>
+{% endif %}

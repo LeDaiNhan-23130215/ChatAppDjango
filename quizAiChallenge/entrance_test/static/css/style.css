@@ -1,0 +1,111 @@
+/* ====== COMMON ====== */
+body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 20px;
+    background-color: #fdfdfd;
+    color: #333;
+}
+
+h1, h2, h3, h4 {
+    color: #2c3e50;
+}
+
+p, ul, li {
+    font-size: 16px;
+}
+
+ul {
+    margin-left: 20px;
+}
+
+/* ====== BUTTON ====== */
+button {
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+    margin-bottom: 15px;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+/* ====== PASSAGE BOX ====== */
+.passage-box {
+    background-color: #f0f8ff;
+    border-left: 5px solid #3498db;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+}
+
+/* ====== QUESTION BOX ====== */
+.question-box {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: #fff;
+}
+
+.question-box p {
+    margin: 8px 0;
+}
+
+.question-box label {
+    display: block;
+    margin: 5px 0;
+}
+
+/* ====== TABLE ====== */
+table {
+    border-collapse: collapse;
+    width: 90%;
+    margin-bottom: 20px;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+}
+
+th {
+    background-color: #3498db;
+    color: #fff;
+}
+
+tr.weak {
+    background-color: #ffe0e0;
+}
+
+/* ====== LINKS ====== */
+a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    table {
+        width: 100%;
+        font-size: 14px;
+    }
+    button {
+        width: 100%;
+        padding: 12px;
+    }
+}

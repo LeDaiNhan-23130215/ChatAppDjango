@@ -16,12 +16,16 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from accounts import views as accounts_views
+from core import views as core_views
+from django.conf import settings
+from django.conf.urls.static import static
+
 urlpatterns = [
- path('admin/', admin.site.urls),
+    #Trang Admin
+    path('admin/', admin.site.urls),
 
     # Trang chủ chính
-    path('', accounts_views.homepage, name='homepage'),
+    path('', core_views.homepage, name='homepage'),
 
     # App accounts
     path('accounts/', include('accounts.urls')),
@@ -31,4 +35,15 @@ urlpatterns = [
 
     # App AI battle
     path('user-vs-ai/', include('quiz_ai_battle.urls')),
+
+    #App Entrance Test
+    path('entrance-test/', include('entrance_test.urls')),
+
+    #App Learning Path
+    path('api/', include('learning_path.urls')),
 ]
+
+urlpatterns += static(
+    settings.MEDIA_URL,
+    document_root=settings.MEDIA_ROOT
+)

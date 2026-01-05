@@ -1,0 +1,34 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Learning Path</title>
+</head>
+<body>
+
+<h1>📘 Lộ trình học của bạn</h1>
+
+{% if items %}
+    {% for item in items %}
+        <div class="item {{ item.status|lower }}">
+            <strong>{{ item.order }}. {{ item.title }}</strong><br>
+            Skill: {{ item.skill_code }} | Type: {{ item.item_type }} <br>
+
+            {% if item.status == "COMPLETED" %}
+                ✅ Đã hoàn thành
+            {% elif item.status == "UNLOCKED" %}
+                ▶ <a href="{% url 'learning_path:learning_path_item' item.id %}">
+                    <button>Bắt đầu</button>
+                </a>
+            {% else %}
+                🔒 Chưa mở khóa
+            {% endif %}
+        </div>
+    {% endfor %}
+{% else %}
+    <p>⚠️ Bạn chưa có lộ trình học.</p>
+{% endif %}
+
+</body>
+</html>

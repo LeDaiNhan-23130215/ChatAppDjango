@@ -1,0 +1,57 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kết quả Entrance Test</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 70%;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+        .weak {
+            background-color: #ffe0e0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Kết quả Entrance Test TOEIC</h1>
+
+<p>Điểm số: <strong>{{ score }}</strong></p>
+<p>Trình độ: <strong>{{ level }}</strong></p>
+
+<p>Số câu đúng: {{ correct_answers }} / {{ total_questions }}</p>
+
+<hr>
+
+<h2>📊 Thống kê theo từng Part</h2>
+
+<table>
+    <tr>
+        <th>Part</th>
+        <th>Số câu đúng</th>
+        <th>Tổng câu</th>
+        <th>Độ chính xác (%)</th>
+        <th>Tỉ lệ sai (%)</th>
+    </tr>
+
+    {% for p in part_summary %}
+    <tr class="{% if p.accuracy < 60 %}weak{% endif %}">
+        <td>{{ p.part_name }}</td>
+        <td>{{ p.correct }}</td>
+        <td>{{ p.total }}</td>
+        <td>{{ p.accuracy }}%</td>
+        <td>{{ p.wrong_rate }}%</td>
+    </tr>
+    {% endfor %}
+</table>
+<hr>
+</body>
+</html>

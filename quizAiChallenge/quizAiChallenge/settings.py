@@ -37,8 +37,14 @@ INSTALLED_APPS = [
     'daphne',
     'channels',
     'quiz',
+    'rest_framework',
     'accounts',
     'quiz_ai_battle',
+    'core',
+    'entrance_test',
+    'learning_profile',
+    'learning_path',
+    'lesson',
     
     'django.contrib.admin',
     'django.contrib.auth',
@@ -141,3 +147,5 @@ LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
 
 AUTH_USER_MODEL = 'accounts.User'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

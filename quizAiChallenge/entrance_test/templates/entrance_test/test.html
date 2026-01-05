@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TOEIC Entrance Test</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <h1>Bài kiểm tra đầu vào TOEIC</h1>
+
+    <p>
+        Vui lòng chọn <strong>một đáp án đúng nhất</strong> cho mỗi câu hỏi.
+        Kết quả sẽ được dùng để đánh giá trình độ TOEIC hiện tại của bạn.
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {% for question in questions %}
+            {% ifchanged question.passage %}
+                {% if question.passage %}
+                    <div class="passage-box">
+                        <strong>Passage:</strong>
+                        <p>{{ question.passage|linebreaksbr }}</p>
+                    </div>
+                {% endif %}
+            {% endifchanged %}
+
+            {% if question.image and question.image.image %}
+                <img src="{{ question.image.image.url }}" width="300px">
+            {% endif %}
+
+            <div class="question-block">
+                <p>
+                    <strong>
+                        Câu {{ forloop.counter }} ({{ question.get_part_display }}):
+                    </strong>
+                </p>
+
+                <p>{{ question.content }}</p>
+
+                {% for choice in question.choices.all %}
+                    <label>
+                        <input type="radio"
+                               name="q{{ question.id }}"
+                               value="{{ choice.id }}"
+                               required>
+                        {{ choice.content }}
+                    </label><br>
+                {% endfor %}
+            </div>
+            <hr>
+        {% endfor %}
+
+        <button type="submit">Nộp bài</button>
+    </form>
+</body>
+</html>
