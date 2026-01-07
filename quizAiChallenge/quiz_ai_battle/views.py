@@ -10,11 +10,13 @@ from .ai_model import get_ai
 def start_match(request):
     if request.method == "POST":
         ai_mode = request.POST.get("ai_mode", "random")
+        ai_difficulty = request.POST.get("ai_difficulty", "medium")
 
         # Tạo match mới
         match = Match.objects.create(
             user=request.user,
-            ai_mode=ai_mode
+            ai_mode=ai_mode,
+            ai_difficulty = ai_difficulty
         )
 
         # Lấy 5 câu hỏi đầu tiên (hoặc random nếu muốn)
@@ -34,7 +36,6 @@ def start_match(request):
         )
 
     return render(request, "quiz_ai_battle/start.html")
-
 
 # =========================
 # Chơi từng round
@@ -67,7 +68,7 @@ def play_ground(request, match_id, round_index):
             match.user_score += 1
 
         # AI trả lời
-        ai = get_ai(match.ai_mode)
+        ai = get_ai(match.ai_mode, match.ai_difficulty)
         ai_ans = ai.get_answer(current_round.question)
         current_round.ai_answer = ai_ans
         current_round.ai_correct = (ai_ans == current_round.question.correct_answer)

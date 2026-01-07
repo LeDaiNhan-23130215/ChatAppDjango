@@ -5,14 +5,14 @@
 
 {% block content %}
 <section class="container">
-  <h2>{{ practice.title }}</h2>
-  <p>Điểm: {{ score }}/{{ practice.questions_for_quiz.count }}</p>
-  <p>Tỉ lệ đúng: {{ percent }}%</p>
-  {% if passed %}
-    <p>✅ Bạn đã vượt qua bài Practice!</p>
-  {% else %}
-    <p>❌ Bạn chưa đạt yêu cầu, hãy thử lại.</p>
-  {% endif %}
-  <a href="{% url 'learning_path:learning_path' %}"><button>Quay lại lộ trình</button></a>
+    <h2>{{ practice.title }}</h2>
+    <p>Điểm: {{ score }}/{{ practice.questions_for_quiz.count }}</p>
+    <p>Tỉ lệ đúng: {{ percent }}%</p>
+    {% if passed %}
+      <p>✅ Bạn đã vượt qua bài Practice!</p>
+    {% else %}
+      <p>❌ Bạn chưa đạt yêu cầu, hãy thử lại.</p>
+    {% endif %}
+    <a href="{% url 'learning_path:learning_path' %}"><button>Quay lại lộ trình</button></a>
 </section>
 {% endblock %}

@@ -1,5 +1,5 @@
 /* =======================
-   RESET + BODY
+   RESET
 ======================= */
 * {
     margin: 0;
@@ -13,7 +13,7 @@ body {
 }
 
 /* =======================
-   BACKGROUND FULL PAGE
+   BACKGROUND
 ======================= */
 .background {
     position: relative;
@@ -29,7 +29,7 @@ body {
     padding: 30px;
 }
 
-/* Overlay mờ */
+/* Overlay tối */
 .background::before {
     content: "";
     position: absolute;
@@ -45,24 +45,30 @@ body {
 }
 
 /* =======================
+   WRAPPER
+======================= */
+.background {
+    flex-direction: column;
+}
+
+/* =======================
    TITLE
 ======================= */
 .title {
     color: #fff;
     font-size: 32px;
     margin-bottom: 25px;
-    margin-right: 35px;
     text-align: center;
     text-shadow: 0 4px 12px rgba(0,0,0,0.6);
 }
 
 /* =======================
-   AI FORM (GLASS STYLE)
+   FORM (GLASS EFFECT)
 ======================= */
 .ai-form {
     width: 100%;
     max-width: 420px;
-    padding: 35px;
+    padding: 30px;
     border-radius: 20px;
 
     background: rgba(255, 255, 255, 0.15);
@@ -73,7 +79,16 @@ body {
 
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 20px;
+}
+
+/* =======================
+   AI MODES
+======================= */
+.ai-modes {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
 /* =======================
@@ -126,11 +141,151 @@ body {
     color: #ddd;
 }
 
+/* ======================= QUIZ CONTAINER ======================= */ 
+.container { 
+    width: 60%; 
+    margin: 40px auto; 
+    background: white; 
+    padding: 25px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+} 
+
+/* ======================= QUIZ CONTENT ======================= */ 
+.question { 
+    font-size: 18px; 
+    margin-bottom: 15px; 
+}
+
+.options label { 
+    display: block; 
+    padding: 10px; 
+    margin-bottom: 8px; 
+    border-radius: 6px; 
+    border: 1px solid #ddd; 
+    cursor: pointer; 
+} 
+
+.options input { 
+    margin-right: 10px; 
+}
+
+.options label:hover { 
+    background: #eef3ff; 
+} 
+
+button { 
+    background: #4f46e5; 
+    color: white; 
+    border: none; 
+    padding: 10px 20px; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    font-size: 16px; 
+} 
+
+button:hover { 
+    background: #4338ca; 
+} 
+/* ======================= RESULT / SCORE ======================= */ 
+.score-box { 
+    display: flex; 
+    justify-content: space-between; 
+    margin-top: 20px; 
+    font-weight: bold; 
+} 
+
+.correct { 
+    color: green; 
+} 
+
+.wrong { 
+    color: red; 
+} 
+
+.result-box { 
+    padding: 15px; 
+    border-radius: 8px; 
+    background: #f9fafb; 
+    margin-bottom: 15px; 
+}
+
+.home-btn {
+    display: flex;
+    align-items: center;
+    justify-items: center;
+    padding: 20px;
+    margin-top: 15px;
+}
+
+a{
+    text-decoration: none;
+}
+
+a:hover{
+    text-decoration: none;
+}
+
+/* ======================= TABLE ======================= */ 
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 15px; 
+}
+
+table th, table td { 
+    border: 1px solid #ddd; 
+    padding: 8px; 
+} 
+
+table th { 
+    background: #eef2ff; 
+}
+
+/* =======================
+   DIFFICULTY SELECT
+======================= */
+.difficulty-select {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: #fff;
+}
+
+.difficulty-select label {
+    font-size: 16px;
+    font-weight: 500;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.difficulty-select select {
+    padding: 12px;
+    border-radius: 12px;
+    border: 2px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.25s ease;
+}
+
+.difficulty-select select option {
+    background: #222; /* nền tối cho option */
+    color: #fff;
+}
+
+.difficulty-select select:hover {
+    background: rgba(255,255,255,0.25);
+    transform: translateY(-2px);
+}
+
 /* =======================
    START BUTTON
 ======================= */
 .start-btn {
-    margin-top: 15px;
+    margin-top: 10px;
     padding: 14px;
     border-radius: 14px;
     border: none;
@@ -147,98 +302,4 @@ body {
 .start-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 25px rgba(76, 175, 80, 0.6);
-}
-
-/* =======================
-   QUIZ CONTAINER
-======================= */
-.container {
-    width: 60%;
-    margin: 40px auto;
-    background: white;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-/* =======================
-   QUIZ CONTENT
-======================= */
-.question {
-    font-size: 18px;
-    margin-bottom: 15px;
-}
-
-.options label {
-    display: block;
-    padding: 10px;
-    margin-bottom: 8px;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-    cursor: pointer;
-}
-
-.options input {
-    margin-right: 10px;
-}
-
-.options label:hover {
-    background: #eef3ff;
-}
-
-button {
-    background: #4f46e5;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-button:hover {
-    background: #4338ca;
-}
-
-/* =======================
-   RESULT / SCORE
-======================= */
-.score-box {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
-    font-weight: bold;
-}
-
-.correct {
-    color: green;
-}
-
-.wrong {
-    color: red;
-}
-
-.result-box {
-    padding: 15px;
-    border-radius: 8px;
-    background: #f9fafb;
-    margin-bottom: 15px;
-}
-
-/* =======================
-   TABLE
-======================= */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
-
-table th, table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-}
-
-table th {
-    background: #eef2ff;
 }

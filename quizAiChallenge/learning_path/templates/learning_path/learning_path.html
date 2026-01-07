@@ -7,28 +7,29 @@
 </head>
 <body>
 
-<h1>📘 Lộ trình học của bạn</h1>
+    <h1>📘 Lộ trình học của bạn</h1>
 
-{% if items %}
-    {% for item in items %}
-        <div class="item {{ item.status|lower }}">
-            <strong>{{ item.order }}. {{ item.title }}</strong><br>
-            Skill: {{ item.skill_code }} | Type: {{ item.item_type }} <br>
+    {% if items %}
+        {% for item in items %}
+            <div class="item {{ item.status|lower }}">
+                <strong>{{ item.order }}. {{ item.title }}</strong><br>
+                Skill: {{ item.skill_code }} | Type: {{ item.item_type }} <br>
 
-            {% if item.status == "COMPLETED" %}
-                ✅ Đã hoàn thành
-            {% elif item.status == "UNLOCKED" %}
-                ▶ <a href="{% url 'learning_path:learning_path_item' item.id %}">
-                    <button>Bắt đầu</button>
-                </a>
-            {% else %}
-                🔒 Chưa mở khóa
-            {% endif %}
-        </div>
-    {% endfor %}
-{% else %}
-    <p>⚠️ Bạn chưa có lộ trình học.</p>
-{% endif %}
-
+                {% if item.status == "COMPLETED" %}
+                    ✅ Đã hoàn thành
+                {% elif item.status == "UNLOCKED" %}
+                    ▶ <a href="{% url 'learning_path:learning_path_item' item.id %}">
+                        <button>Bắt đầu</button>
+                    </a>
+                {% else %}
+                    🔒 Chưa mở khóa
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>⚠️ Bạn chưa có lộ trình học.</p>
+    {% endif %}
+    
+    <a href="{% url 'homepage' %}"><button>Quay về trang chủ</button></a>
 </body>
 </html>
