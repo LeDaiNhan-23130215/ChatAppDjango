@@ -22,36 +22,37 @@
 </head>
 <body>
 
-<h1>Kết quả Entrance Test TOEIC</h1>
+    <h1>Kết quả Entrance Test TOEIC</h1>
 
-<p>Điểm số: <strong>{{ score }}</strong></p>
-<p>Trình độ: <strong>{{ level }}</strong></p>
+    <p>Điểm số: <strong>{{ score }}</strong></p>
+    <p>Trình độ: <strong>{{ level }}</strong></p>
 
-<p>Số câu đúng: {{ correct_answers }} / {{ total_questions }}</p>
+    <p>Số câu đúng: {{ correct_answers }} / {{ total_questions }}</p>
 
-<hr>
+    <hr>
 
-<h2>📊 Thống kê theo từng Part</h2>
+    <h2>📊 Thống kê theo từng Part</h2>
 
-<table>
-    <tr>
-        <th>Part</th>
-        <th>Số câu đúng</th>
-        <th>Tổng câu</th>
-        <th>Độ chính xác (%)</th>
-        <th>Tỉ lệ sai (%)</th>
-    </tr>
+    <table>
+        <tr>
+            <th>Part</th>
+            <th>Số câu đúng</th>
+            <th>Tổng câu</th>
+            <th>Độ chính xác (%)</th>
+            <th>Tỉ lệ sai (%)</th>
+        </tr>
 
-    {% for p in part_summary %}
-    <tr class="{% if p.accuracy < 60 %}weak{% endif %}">
-        <td>{{ p.part_name }}</td>
-        <td>{{ p.correct }}</td>
-        <td>{{ p.total }}</td>
-        <td>{{ p.accuracy }}%</td>
-        <td>{{ p.wrong_rate }}%</td>
-    </tr>
-    {% endfor %}
-</table>
-<hr>
+        {% for p in part_summary %}
+        <tr class="{% if p.accuracy < 60 %}weak{% endif %}">
+            <td>{{ p.part_name }}</td>
+            <td>{{ p.correct }}</td>
+            <td>{{ p.total }}</td>
+            <td>{{ p.accuracy }}%</td>
+            <td>{{ p.wrong_rate }}%</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <hr>
+    <a href="{% url 'homepage' %}"><button>Quay về trang chủ</button></a>
 </body>
 </html>

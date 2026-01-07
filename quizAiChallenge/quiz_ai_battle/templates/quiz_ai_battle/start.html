@@ -2,35 +2,48 @@
 <link rel="stylesheet" href="{% static 'quiz_ai_battle/style.css' %}">
 
 <div class="background">
-    <h2 class="title">🎮 Choose AI Mode</h2>
+    <h2 class="title">🎮 Chọn AI và độ khó</h2>
 
     <form method="post" class="ai-form">
         {% csrf_token %}
 
-        <label class="ai-card">
-            <input type="radio" name="ai_mode" value="random" checked>
-            <div class="card-content">
-                <div class="icon">🤖</div>
-                <div class="text">
-                    <h3>Random AI</h3>
-                    <p>Trả lời ngẫu nhiên, dễ chơi</p>
+        <!-- Chọn loại AI -->
+        <div class="ai-modes">
+            <label class="ai-card">
+                <input type="radio" name="ai_mode" value="random" checked>
+                <div class="card-content">
+                    <div class="icon">🤖</div>
+                    <div class="text">
+                        <h3>Random AI</h3>
+                        <p>Trả lời ngẫu nhiên, dễ chơi</p>
+                    </div>
                 </div>
-            </div>
-        </label>
+            </label>
 
-        <label class="ai-card">
-            <input type="radio" name="ai_mode" value="gpt">
-            <div class="card-content">
-                <div class="icon">🧠</div>
-                <div class="text">
-                    <h3>GPT AI</h3>
-                    <p>Thông minh hơn, dùng AI GPT</p>
+            <label class="ai-card">
+                <input type="radio" name="ai_mode" value="gpt">
+                <div class="card-content">
+                    <div class="icon">🧠</div>
+                    <div class="text">
+                        <h3>GPT AI</h3>
+                        <p>Thông minh hơn, dùng AI GPT</p>
+                    </div>
                 </div>
-            </div>
-        </label>
+            </label>
+        </div>
+
+        <div class="form-group difficulty-select">
+            <label for="ai_difficulty">Chọn độ khó</label>
+            <select name="ai_difficulty" class="form-control">
+                <option value="easy">Dễ</option>
+                <option value="medium" selected>Trung bình</option>
+                <option value="hard">Khó</option>
+                <option value="expert">Chuyên gia</option>
+            </select>
+        </div>
 
         <button type="submit" class="start-btn">
-            🚀 Start Match
+            🚀 Bắt đầu trận đấu
         </button>
     </form>
 </div>
