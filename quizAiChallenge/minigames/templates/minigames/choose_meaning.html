@@ -1,0 +1,132 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Chọn nghĩa</title>
+  <link rel="stylesheet" href="{% static 'minigames/style.css' %}">
+</head>
+<body>
+  <div id="game">
+    <div id="progress">Câu: <span id="count">0</span></div>
+    <div id="prompt"></div>
+    <ul id="choices" role="listbox" aria-label="Lựa chọn nghĩa"></ul>
+    <div id="feedback" aria-live="polite"></div>
+    <button id="next" disabled>Tiếp tục</button>
+  </div>
+
+<script>
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    for (const cookie of document.cookie.split(';')) {
+      const c = cookie.trim();
+      if (c.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(c.slice(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+let sessionId = null;
+let startTs = null;
+let total = 10;
+let count = 0;
+let answered = false;
+
+async function start() {
+  const res = await fetch("{% url 'minigames:create_session' %}", {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrftoken
+    },
+    body: JSON.stringify({ total_questions: total })
+  });
+  const data = await res.json();
+  sessionId = data.session_id;
+  await loadNext();
+}
+
+async function loadNext() {
+  if (count >= total) return finish();
+
+  const res = await fetch(`/minigames/sessions/${sessionId}/next`);
+  if (!res.ok) return finish();
+
+  const q = await res.json();
+  startTs = q.start_ts;
+  answered = false;
+
+  count++;
+  document.getElementById('count').innerText = count + '/' + total;
+  document.getElementById('prompt').innerText = q.prompt;
+
+  const ul = document.getElementById('choices');
+  ul.innerHTML = '';
+
+  q.choices.forEach(c => {
+    const li = document.createElement('li');
+    li.tabIndex = 0;
+    li.innerText = c.text;
+    li.onclick = () => submit(q.question_id, c.id, li);
+    li.onkeypress = e => { if (e.key === 'Enter') submit(q.question_id, c.id, li); };
+    ul.appendChild(li);
+  });
+
+  document.getElementById('feedback').innerText = '';
+  document.getElementById('next').disabled = true;
+}
+
+async function submit(questionId, choiceId, el) {
+  if (answered) return;
+  answered = true;
+
+  const res = await fetch(`/minigames/sessions/${sessionId}/answer`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrftoken
+    },
+    body: JSON.stringify({
+      question_id: questionId,
+      choice_id: choiceId,
+      start_ts: startTs
+    })
+  });
+
+  const r = await res.json();
+  document.getElementById('feedback').innerText = r.correct ? 'Đúng!' : 'Sai rồi';
+
+  // disable all choices
+  document.querySelectorAll('#choices li').forEach(li => {
+    li.style.pointerEvents = 'none';
+    li.style.opacity = '0.6';
+  });
+
+  el.style.fontWeight = 'bold';
+  document.getElementById('next').disabled = false;
+}
+
+async function finish() {
+  const res = await fetch(`/minigames/sessions/${sessionId}/finish`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': csrftoken }
+  });
+
+  const r = await res.json();
+  document.getElementById('prompt').innerText =
+    `Hoàn thành! Điểm: ${r.score}/${r.total_questions} (Độ chính xác: ${r.accuracy})`;
+
+  document.getElementById('choices').innerHTML = '';
+  document.getElementById('next').style.display = 'none';
+}
+
+document.getElementById('next').onclick = loadNext;
+start();
+</script>
+</body>
+</html>
