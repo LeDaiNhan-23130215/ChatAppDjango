@@ -1,0 +1,6 @@
+#game { max-width: 600px; margin: 40px auto; font-family: system-ui; }
+#prompt { font-size: 20px; margin: 16px 0; }
+#choices li { padding: 10px; border: 1px solid #ddd; margin-bottom: 8px; cursor: pointer; border-radius: 6px; }
+#choices li:focus { outline: 2px solid #4a90e2; }
+#feedback { margin-top: 12px; font-weight: 600; }
+#next { margin-top: 16px; padding: 8px 12px; }

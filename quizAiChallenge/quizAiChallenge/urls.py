@@ -41,6 +41,9 @@ urlpatterns = [
 
     #App Learning Path
     path('api/', include('learning_path.urls')),
+
+    #App Minigames
+    path('minigames/', include('minigames.urls')),
 ]
 
 urlpatterns += static(

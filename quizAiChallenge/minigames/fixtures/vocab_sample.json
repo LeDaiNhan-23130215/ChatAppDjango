@@ -1,0 +1,38 @@
+[
+  {
+    "model": "minigames.vocabulary",
+    "pk": 1,
+    "fields": {
+      "term": "apple",
+      "language": "en",
+      "part_of_speech": "noun",
+      "definition": "quả táo",
+      "example": "I eat an apple every morning.",
+      "tags": ["fruit", "basic"]
+    }
+  },
+  {
+    "model": "minigames.vocabulary",
+    "pk": 2,
+    "fields": {
+      "term": "banana",
+      "language": "en",
+      "part_of_speech": "noun",
+      "definition": "quả chuối",
+      "example": "Bananas are yellow.",
+      "tags": ["fruit", "basic"]
+    }
+  },
+  {
+    "model": "minigames.vocabulary",
+    "pk": 3,
+    "fields": {
+      "term": "orange",
+      "language": "en",
+      "part_of_speech": "noun",
+      "definition": "quả cam",
+      "example": "Orange juice is tasty.",
+      "tags": ["fruit", "basic"]
+    }
+  }
+]
