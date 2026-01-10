@@ -1,0 +1,25 @@
+{% block content %}
+<head>
+  <meta charset="UTF-8">
+  <title>Chọn nghĩa</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'minigames/style.css' %}">
+</head>
+<h2>Flashcard Minigame</h2>
+<p>Click vào thẻ để lật xem nghĩa và ví dụ.</p>
+<div class="flashcard-container">
+  {% for vocab in vocabularies %}
+    <div class="card" onclick="this.classList.toggle('flipped')">
+      <div class="card-inner">
+        <div class="card-front">
+          <h3>{{ vocab.term }}</h3>
+        </div>
+        <div class="card-back">
+          <p><strong>{{ vocab.definition }}</strong></p>
+          <small>{{ vocab.example }}</small>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}
