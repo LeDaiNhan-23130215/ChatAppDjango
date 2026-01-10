@@ -31,11 +31,15 @@ class Minigame(models.Model):
         return self.name
 
 class Question(models.Model):
+    QUESTION_TYPES = [
+    ('mcq', 'Multiple Choice'),
+    ('flashcard', 'Flashcard'),
+    ]
     minigame = models.ForeignKey(Minigame, on_delete=models.CASCADE)
     vocabulary = models.ForeignKey(Vocabulary, on_delete=models.CASCADE)
     prompt = models.CharField(max_length=255)
     difficulty = models.IntegerField(default=1)
-    type = models.CharField(max_length=50)
+    type = models.CharField(max_length=50, choices=QUESTION_TYPES)
     created_at = models.DateTimeField(
         auto_now_add=True,
         null=True,
@@ -88,3 +92,4 @@ class Attempt(models.Model):
     is_correct = models.BooleanField(default=False)
     responded_at = models.DateTimeField(auto_now_add=True)
     time_ms = models.IntegerField(default=0)
+    revealed = models.BooleanField(default=False)

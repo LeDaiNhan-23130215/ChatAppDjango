@@ -34,5 +34,89 @@
       "example": "Orange juice is tasty.",
       "tags": ["fruit", "basic"]
     }
+  },
+  {
+    "model": "minigames.vocabulary",
+    "pk": 4,
+    "fields": {
+      "term": "grape",
+      "language": "en",
+      "part_of_speech": "noun",
+      "definition": "quả nho",
+      "example": "Grapes can be made into wine.",
+      "tags": ["fruit", "basic"]
+    }
+  },
+  {
+    "model": "minigames.vocabulary",
+    "pk": 5,
+    "fields": {
+      "term": "pear",
+      "language": "en",
+      "part_of_speech": "noun",
+      "definition": "quả lê",
+      "example": "She ate a sweet pear.",
+      "tags": ["fruit", "basic"]
+    }
+  },
+  {
+    "model": "minigames.vocabulary",
+    "pk": 6,
+    "fields": {
+      "term": "pineapple",
+      "language": "en",
+      "part_of_speech": "noun",
+      "definition": "quả dứa",
+      "example": "Pineapple is juicy and sweet.",
+      "tags": ["fruit", "basic"]
+    }
+  },
+  {
+    "model": "minigames.vocabulary",
+    "pk": 7,
+    "fields": {
+      "term": "watermelon",
+      "language": "en",
+      "part_of_speech": "noun",
+      "definition": "quả dưa hấu",
+      "example": "Watermelon is refreshing in summer.",
+      "tags": ["fruit", "basic"]
+    }
+  },
+  {
+    "model": "minigames.vocabulary",
+    "pk": 8,
+    "fields": {
+      "term": "strawberry",
+      "language": "en",
+      "part_of_speech": "noun",
+      "definition": "quả dâu tây",
+      "example": "Strawberries are red and sweet.",
+      "tags": ["fruit", "basic"]
+    }
+  },
+  {
+    "model": "minigames.vocabulary",
+    "pk": 9,
+    "fields": {
+      "term": "mango",
+      "language": "en",
+      "part_of_speech": "noun",
+      "definition": "quả xoài",
+      "example": "Mangoes are tropical fruits.",
+      "tags": ["fruit", "basic"]
+    }
+  },
+  {
+    "model": "minigames.vocabulary",
+    "pk": 10,
+    "fields": {
+      "term": "lemon",
+      "language": "en",
+      "part_of_speech": "noun",
+      "definition": "quả chanh",
+      "example": "Lemon juice is sour.",
+      "tags": ["fruit", "basic"]
+    }
   }
 ]

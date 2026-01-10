@@ -1,0 +1,15 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'minigames/style.css' %}">
+<div class="container">
+  <h2>Chọn kiểu chơi</h2>
+  <div class="minigame-menu">
+    {% for mg in minigames %}
+      <div class="minigame-card">
+        <h3>{{ mg.name }}</h3>
+        <a href="{% url 'minigames:play_minigame' mg.code %}" class="btn">Chơi ngay</a>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+<style>
+</style>
