@@ -93,3 +93,4 @@ class Attempt(models.Model):
     responded_at = models.DateTimeField(auto_now_add=True)
     time_ms = models.IntegerField(default=0)
     revealed = models.BooleanField(default=False)
+    remembered = models.BooleanField(null=True)

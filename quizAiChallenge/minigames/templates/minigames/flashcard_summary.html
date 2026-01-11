@@ -1,0 +1,37 @@
+{% block content %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'minigames/style.css' %}">
+<h2>🎉 Hoàn thành Flashcard</h2>
+
+<div class="summary-card">
+  <div class="summary-item total">
+    📚 Tổng số thẻ
+    <strong>{{ total }}</strong>
+  </div>
+
+  <div class="summary-row">
+    <div class="summary-item remembered">
+      ✅ Nhớ
+      <strong>{{ remembered }}</strong>
+    </div>
+
+    <div class="summary-item forgotten">
+      ❌ Không nhớ
+      <strong>{{ forgotten }}</strong>
+    </div>
+  </div>
+
+  <div class="summary-accuracy">
+    🎯 Độ nhớ: <strong>{{ accuracy }}%</strong>
+  </div>
+
+  <div class="summary-actions">
+    <a href="{% url 'minigames:minigames_menu' %}" class="btn">
+      🏠 Về trang chủ
+    </a>
+    <a href="{% url 'minigames:play_minigame' 'flashcard' %}" class="btn secondary">
+      🔁 Chơi lại
+    </a>
+  </div>
+</div>
+{% endblock %}

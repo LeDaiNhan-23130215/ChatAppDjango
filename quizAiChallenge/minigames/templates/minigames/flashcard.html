@@ -1,25 +1,211 @@
 {% block content %}
+{% csrf_token %}
 <head>
   <meta charset="UTF-8">
-  <title>Chọn nghĩa</title>
+  <title>Flashcard</title>
   {% load static %}
   <link rel="stylesheet" href="{% static 'minigames/style.css' %}">
 </head>
-<h2>Flashcard Minigame</h2>
-<p>Click vào thẻ để lật xem nghĩa và ví dụ.</p>
+
+<h2>Flashcard</h2>
+<p style="text-align:center; color:#6b7280;">
+  Bạn có nhớ nghĩa của từ này không?
+</p>
+
 <div class="flashcard-container">
-  {% for vocab in vocabularies %}
-    <div class="card" onclick="this.classList.toggle('flipped')">
-      <div class="card-inner">
-        <div class="card-front">
-          <h3>{{ vocab.term }}</h3>
-        </div>
-        <div class="card-back">
-          <p><strong>{{ vocab.definition }}</strong></p>
-          <small>{{ vocab.example }}</small>
-        </div>
+  <div class="card" id="flashcard">
+    <div class="progress-wrapper">
+      <div class="progress-text">
+        <span id="currentIndex">0</span> / <span id="totalCount">0</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
       </div>
     </div>
-  {% endfor %}
+
+    <div class="card-inner">
+      <div class="card-front">
+        <h3 id="term">Loading...</h3>
+      </div>
+      <div class="card-back">
+        <p><strong id="definition"></strong></p>
+        <small id="example"></small>
+      </div>
+    </div>
+  </div>
+
+  <div id="readingHint" class="reading-hint hidden">
+    👀 Đang đọc...
+  </div>
+
+  <div class="flashcard-actions">
+    <button id="rememberBtn">Nhớ</button>
+    <button id="forgetBtn">Không nhớ</button>
+  </div>
 </div>
+
+<script>
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    document.cookie.split(';').forEach(cookie => {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+      }
+    });
+  }
+  return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+const CREATE_SESSION_URL = "{% url 'minigames:create_session' %}";
+const NEXT_URL_TEMPLATE   = "{% url 'minigames:next_question' 0 %}";
+const FINISH_URL_TEMPLATE = "{% url 'minigames:finish_session' 0 %}";
+const FLASHCARD_URL_TEMPLATE = "{% url 'minigames:submit_flashcard' 0 %}";
+
+let sessionId = null;
+let flipped = false;
+let currentQuestionId = null;
+let currentIndex = 0;
+let totalCount = 10;
+let canProceed = true;
+const READ_DELAY = 3000; 
+
+async function createSession() {
+  const res = await fetch(CREATE_SESSION_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrftoken
+    },
+    body: JSON.stringify({ code: "flashcard", total_questions: 10 })
+  });
+
+  const data = await res.json();
+  sessionId = data.session_id;
+
+  totalCount = 10;
+  document.getElementById("totalCount").innerText = totalCount;
+}
+
+async function loadNextCard() {
+  const url = NEXT_URL_TEMPLATE.replace("0", sessionId);
+  const res = await fetch(url);
+
+  if (res.status === 400) {
+    await finishSessionAndRedirect();
+    return;
+  }
+
+  const data = await res.json();
+  renderCard(data);
+}
+
+async function submitFlashcard(remembered) {
+  const url = FLASHCARD_URL_TEMPLATE.replace("0", sessionId);
+
+  await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrftoken
+    },
+    body: JSON.stringify({
+      question_id: currentQuestionId,
+      remembered: remembered
+    })
+  });
+}
+
+async function finishSessionAndRedirect() {
+  await fetch(FINISH_URL_TEMPLATE.replace("0", sessionId), {
+    method: "POST",
+    headers: { "X-CSRFToken": csrftoken }
+  });
+
+  window.location.href =
+    `/minigames/sessions/${sessionId}/summary/`;
+}
+
+function renderCard(data) {
+  currentQuestionId = data.question_id;
+  currentIndex += 1;
+  updateProgress();
+
+  document.getElementById("term").innerText = data.term;
+  document.getElementById("definition").innerText = data.definition;
+  document.getElementById("example").innerText = data.example;
+
+  document.getElementById("flashcard").classList.remove("flipped");
+  flipped = false;
+
+  canProceed = true;
+  setButtonsDisabled(false);
+}
+
+function updateProgress() {
+  document.getElementById("currentIndex").innerText = currentIndex;
+
+  const percent = Math.min((currentIndex / totalCount) * 100, 100);
+  document.getElementById("progressFill").style.width = percent + "%";
+}
+
+function setButtonsDisabled(disabled) {
+  document.getElementById("rememberBtn").disabled = disabled;
+  document.getElementById("forgetBtn").disabled = disabled;
+
+  const opacity = disabled ? "0.6" : "1";
+  document.getElementById("rememberBtn").style.opacity = opacity;
+  document.getElementById("forgetBtn").style.opacity = opacity;
+}
+
+function showReadingHint(show) {
+  document.getElementById("readingHint")
+    .classList.toggle("hidden", !show);
+}
+
+document.getElementById("rememberBtn").onclick = async () => {
+  if (!canProceed) return;
+
+  canProceed = false;
+  setButtonsDisabled(true);
+
+  await submitFlashcard(true);
+  await loadNextCard();
+
+  canProceed = true;
+};
+
+document.getElementById("forgetBtn").onclick = async () => {
+  if (!canProceed) return;
+
+  canProceed = false;
+  setButtonsDisabled(true);
+
+  if (!flipped) {
+    document.getElementById("flashcard").classList.add("flipped");
+    flipped = true;
+  }
+
+  showReadingHint(true);
+
+  setTimeout(async () => {
+    showReadingHint(false);
+
+    await submitFlashcard(false);
+    await loadNextCard();
+
+    canProceed = true;
+  }, READ_DELAY);
+};
+
+(async function init() {
+  await createSession();
+  await loadNextCard();
+  currentIndex = 0;
+  updateProgress();
+})();
+</script>
+
 {% endblock %}
