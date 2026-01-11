@@ -20,7 +20,7 @@ def play_minigame(request, code):
     if mg.code == 'choose_meaning':
         return render(request, 'minigames/mcq.html', {'vocabularies': vocabularies})
     elif mg.code == 'flashcard':
-        return render(request, 'minigames/flashcard.html', {'vocabularies': vocabularies})
+        return render(request, 'minigames/flashcard.html')
 
 @require_http_methods(["POST"])
 @login_required
@@ -66,20 +66,24 @@ def next_question(req, session_id):
             "choices": [{"id": c.id, "text": c.text} for c in choices],
             "start_ts": int(time.time() * 1000)
         }
-    else:
+    elif session.minigame.code == "flashcard":
         question = Question.objects.create(
             minigame=session.minigame,
             vocabulary=vocab,
-            prompt=f"Flashcard for {vocab.term}",
+            prompt=vocab.term,
             type="flashcard"
         )
-        Attempt.objects.create(session=session, question=question, is_correct=True)
+
+        Attempt.objects.create(
+            session=session,
+            question=question
+        )
+
         payload = {
             "question_id": question.id,
             "term": vocab.term,
             "definition": vocab.definition,
             "example": vocab.example,
-            "start_ts": int(time.time() * 1000)
         }
 
     return JsonResponse(payload)
@@ -141,14 +145,64 @@ def finish_session(request, session_id):
     session = GameSession.objects.get(id=session_id)
     session.finished_at = timezone.now()
     session.save(update_fields=["finished_at"])
-    
+
     if session.minigame.code == "choose_meaning":
         accuracy = round(session.score / max(session.total_questions, 1), 2)
-    else:
-        accuracy = None
+        return JsonResponse({
+            "score": session.score,
+            "total_questions": session.total_questions,
+            "accuracy": accuracy
+        })
+
+    # FLASHCARD
+    remembered = session.attempts.filter(remembered=True).count()
+    forgotten = session.attempts.filter(remembered=False).count()
+    total = remembered + forgotten
 
     return JsonResponse({
-        "score": session.score,
-        "total_questions": session.total_questions,
-        "accuracy": accuracy
+        "session_id": session.id,
+        "total": total,
+        "remembered": remembered,
+        "forgotten": forgotten,
+        "accuracy": round(remembered / total * 100, 1) if total else 0
+    })
+
+@require_http_methods(["POST"])
+@login_required
+def submit_flashcard(req, session_id):
+    data = json.loads(req.body or "{}")
+    question_id = data.get("question_id")
+    remembered = data.get("remembered")
+
+    if remembered is None:
+        return HttpResponseBadRequest("Invalid payload")
+
+    attempt = Attempt.objects.filter(
+        session_id=session_id,
+        question_id=question_id,
+        remembered__isnull=True
+    ).first()
+
+    if not attempt:
+        return HttpResponseBadRequest("Invalid attempt")
+
+    attempt.remembered = bool(remembered)
+    attempt.revealed = not remembered
+    attempt.save()
+
+    return JsonResponse({"ok": True})
+
+@login_required
+def flashcard_summary(request, session_id):
+    session = GameSession.objects.get(id=session_id, user=request.user)
+
+    remembered = session.attempts.filter(remembered=True).count()
+    forgotten = session.attempts.filter(remembered=False).count()
+    total = remembered + forgotten
+
+    return render(request, "minigames/flashcard_summary.html", {
+        "total": total,
+        "remembered": remembered,
+        "forgotten": forgotten,
+        "accuracy": round(remembered / total * 100, 1) if total else 0
     })
