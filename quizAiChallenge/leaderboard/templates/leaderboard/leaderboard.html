@@ -1,0 +1,49 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/leaderboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="lb-section">
+    <h2 class="lb-title">🏆 Leaderboard</h2>
+
+    <div class="lb-container">
+        {% for item in leaderboard %}
+        <div class="lb-card">
+
+            <div class="lb-left">
+                <div class="lb-rank">
+                    {% if forloop.counter == 1 %}🥇
+                    {% elif forloop.counter == 2 %}🥈
+                    {% elif forloop.counter == 3 %}🥉
+                    {% else %}{{ forloop.counter }}
+                    {% endif %}
+                </div>
+
+                <div class="lb-user">
+                    <img
+                        src="{% static 'images/avatar_default.png' %}"
+                        class="lb-avatar"
+                    >
+                    <div>
+                        <div class="lb-username">
+                            {{ item.user.username }}
+                        </div>
+                        <div class="lb-subtitle">
+                            Học viên
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lb-score">
+                {{ item.elo }}
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

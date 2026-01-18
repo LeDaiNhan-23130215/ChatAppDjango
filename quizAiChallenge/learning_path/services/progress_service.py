@@ -1,5 +1,6 @@
 from django.utils import timezone
 from learning_path.models import LearningPathItem
+from common.constants import LearningPathItemStatus
 from django.db import transaction
 
 @transaction.atomic
@@ -30,3 +31,29 @@ def complete_item(item: LearningPathItem, user):
         next_item.save()
 
     return True
+
+def get_learning_progress(user):
+    items = LearningPathItem.objects.filter(
+        path__user = user,
+        path__is_active = True
+    )
+
+    total = items.count()
+    if total == 0:
+        return {
+            "total" : 0,
+            "complete": 0,
+            "percent": 0
+        }
+
+    completed = items.filter(
+        status = LearningPathItemStatus.COMPLETED
+    ).count()
+
+    percent = int((completed / total) * 100)
+
+    return {
+        "total": total,
+        "complete": completed,
+        "percent": percent 
+    }
