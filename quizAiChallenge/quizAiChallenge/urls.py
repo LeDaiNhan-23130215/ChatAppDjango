@@ -44,6 +44,9 @@ urlpatterns = [
 
     #App Minigames
     path('minigames/', include('minigames.urls')),
+
+    #App Leaderboard
+    path("leaderboard/", include("leaderboard.urls")),
 ]
 
 urlpatterns += static(

@@ -70,21 +70,37 @@
             </div>
             <div class="card leaderboard-snippet">
                 <h2>Bảng Xếp Hạng Top 3</h2>
-                <ol>
-                    <li> <span class="medal">🥇</span>
-                        <span class="user-info">Nguyễn Văn A</span>
-                        <span class="score">9500 điểm</span>
-                    </li>
-                    <li> <span class="medal">🥈</span>
-                        <span class="user-info">Trần Thị B</span>
-                        <span class="score">9200 điểm</span>
-                    </li>
-                    <li> <span class="medal">🥉</span>
-                        <span class="user-info">Lê Văn C</span>
-                        <span class="score">8850 điểm</span>
-                    </li>
-                </ol>
-                <div class="viewall"><a  href="leaderboard.html"><button>Xem toàn bộ</button></a></div>
+
+                {% if top_users %}
+                    <ol>
+                        {% for item in top_users %}
+                            <li>
+                                <span class="medal">
+                                    {% if forloop.counter == 1 %}🥇
+                                    {% elif forloop.counter == 2 %}🥈
+                                    {% elif forloop.counter == 3 %}🥉
+                                    {% endif %}
+                                </span>
+
+                                <span class="user-info">
+                                    {{ item.user.username }}
+                                </span>
+
+                                <span class="score">
+                                    {{ item.elo }} ELO
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                {% else %}
+                    <p class="empty-text">Chưa có dữ liệu xếp hạng.</p>
+                {% endif %}
+
+                <div class="viewall">
+                    <a href="{% url 'leaderboard:leaderboard' %}">
+                        <button>Xem toàn bộ</button>
+                    </a>
+                </div>
             </div>
         </section>
 

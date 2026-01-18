@@ -1,0 +1,74 @@
+body {
+    background: #0f172a;
+    color: white;
+    font-family: system-ui, sans-serif;
+}
+
+.lb-section {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 0 16px;
+}
+
+.lb-title {
+    text-align: center;
+    font-size: 32px;
+    margin-bottom: 24px;
+    color: #38bdf8;
+}
+
+.lb-container {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.lb-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1e293b;
+    padding: 16px 20px;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.4);
+}
+
+.lb-left {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.lb-rank {
+    width: 36px;
+    text-align: center;
+    font-size: 22px;
+}
+
+.lb-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.lb-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+}
+
+.lb-username {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.lb-subtitle {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.lb-score {
+    font-size: 26px;
+    font-weight: 900;
+    color: #facc15;
+}
