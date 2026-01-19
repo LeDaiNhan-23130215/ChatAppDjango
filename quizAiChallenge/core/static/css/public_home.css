@@ -1,0 +1,235 @@
+/* ================= RESET ================= */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+}
+
+body {
+    background-color: #f4f7f9;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* ================= HEADER ================= */
+#main-header {
+    height: 70px;
+    background-color: #2c3e50;
+    color: white;
+    padding: 15px 5%;
+    display: flex;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.logo {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-right: auto;
+}
+
+.main-nav ul {
+    list-style: none;
+    display: flex;
+}
+
+.main-nav ul li {
+    margin: 0 15px;
+}
+
+.main-nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.main-nav ul li a:hover {
+    color: #3498db;
+}
+
+.user-controls a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* ================= HERO ================= */
+.hero-section {
+    margin: 10px;
+    border-radius: 10px;
+    background-color: #3498db;
+    color: white;
+    padding: 40px 5%;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.hero-section h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.hero-section p {
+    font-size: 1.1em;
+    opacity: 0.95;
+}
+
+/* ================= CONTAINER ================= */
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 30px auto;
+    display: flex;
+    gap: 20px;
+}
+
+/* ================= CARD ================= */
+.card {
+    background-color: #e0e0e0;
+    padding: 20px;
+    border-radius: 10px;
+    flex: 1;
+}
+
+/* ================= CHALLENGE CARDS ================= */
+.challenge-cards-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    padding: 40px 20px;
+}
+
+.challenge-card {
+    flex: 1;
+    max-width: 450px;
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+    background-color: white;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.card-title {
+    font-size: 1.6rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.challenge-img {
+    width: 60%;
+    margin-top: 10px;
+}
+
+/* ================= MINI GAMES ================= */
+#mini-games-preview {
+    display: block;
+}
+
+#mini-games-preview h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.mini-games-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.game-card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.game-card h3 {
+    color: #3498db;
+    margin-bottom: 5px;
+}
+
+.game-card p {
+    font-size: 0.9em;
+    color: #7f8c8d;
+}
+
+/* ================= LOCKED STATE (CORE) ================= */
+
+/* Áp cho challenge cards, dashboard, mini games */
+.locked-section,
+.locked {
+    position: relative;
+    opacity: 0.9;
+}
+
+/* Overlay nền tối */
+.locked::after,
+.locked-section::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    border-radius: 12px;
+    z-index: 1;
+}
+
+/* Overlay nội dung */
+.locked .overlay,
+.locked-section .overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+/* Nút đăng nhập / đăng ký */
+.locked .overlay a,
+.locked-section .overlay a {
+    text-decoration: none;
+}
+
+.locked .overlay button,
+.locked-section .overlay button {
+    background-color: #2ecc71;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+}
+
+.locked .overlay button:hover,
+.locked-section .overlay button:hover {
+    background-color: #27ae60;
+}
+
+/* Disable hover effect */
+.locked .challenge-card:hover,
+.locked .game-card:hover {
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* ================= FOOTER ================= */
+footer {
+    text-align: center;
+    padding: 20px;
+    background-color: #333;
+    color: #ccc;
+    margin-top: 40px;
+}

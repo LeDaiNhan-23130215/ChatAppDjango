@@ -415,3 +415,20 @@ footer {
   initial-value: 0;
   inherits: false;
 }
+.locked {
+    position: relative;
+    filter: blur(1.5px);
+    pointer-events: none;
+}
+
+.locked .overlay {
+    pointer-events: all;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
