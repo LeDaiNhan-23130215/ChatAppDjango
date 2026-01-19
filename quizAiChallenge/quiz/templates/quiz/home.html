@@ -1,2 +1,28 @@
-<h1>Quiz 1v1</h1>
-<a href="quiz/create/">Tạo phòng</a>
+{% extends "core/base.html" %}
+
+{% block title %}Quiz Lobby{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Quiz 1v1</h1>
+    
+    <div class="quiz-actions">
+        <a href="{% url 'quiz:create_room' %}" class="btn btn-primary">Tạo Phòng</a>
+        <a href="{% url 'quiz:join_room' %}" class="btn btn-secondary">Tham Gia Phòng</a>
+    </div>
+    
+    {% if rooms %}
+    <div class="available-rooms">
+        <h2>Các Phòng Đang Chờ</h2>
+        <ul>
+        {% for room in rooms %}
+            <li>
+                <a href="{% url 'quiz:quiz_room' code=room.code %}">Phòng {{ room.code }}</a>
+                - Người chơi: {{ room.player_count }}/2
+            </li>
+        {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

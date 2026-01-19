@@ -4,12 +4,25 @@ import random
 import string
 from common.constants import SkillCode, SkillLevel
 class Question(models.Model):
-    text = models.CharField(max_length=300)
-    a = models.CharField(max_length=200)
-    b = models.CharField(max_length=200)
-    c = models.CharField(max_length=200)
-    d = models.CharField(max_length=200)
-    correct = models.CharField(max_length=1)  # 'A', 'B', 'C', 'D'
+    text = models.TextField()
+    a = models.CharField(max_length=255)
+    b = models.CharField(max_length=255)
+    c = models.CharField(max_length=255)
+    d = models.CharField(max_length=255)
+    correct = models.CharField(
+        max_length=1,
+        choices=[
+            ('A', 'A'),
+            ('B', 'B'),
+            ('C', 'C'),
+            ('D', 'D'),
+        ]
+    )
+    category = models.CharField(max_length=100, blank=True, null=True)
+    difficulty = models.CharField(max_length=20, blank=True, null=True)
+
+    def __str__(self):
+        return self.text[:50]
 
     def as_dict(self):
         return {
@@ -23,9 +36,32 @@ class Question(models.Model):
 
 
 class Room(models.Model):
-    code = models.CharField(max_length=6, unique=True)
+    code = models.CharField(max_length=10, unique=True, db_index=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='created_rooms',
+        null=True,
+        blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
     player_count = models.IntegerField(default=0)
     started = models.BooleanField(default=False)
+    finished = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Room {self.code} ({self.player_count}/2)"
+
+    @property
+    def is_full(self):
+        return self.player_count >= 2
+
+    @property
+    def is_available(self):
+        return not self.started and not self.is_full
 
     @staticmethod
     def generate_code():
@@ -101,3 +137,37 @@ class QuizResult(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.quiz.title} ({'Passed' if self.passed else 'Failed'})"
+
+
+class GameHistory(models.Model):
+    """
+    Lưu lịch sử các trận đấu
+    """
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='histories')
+    player1 = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='games_as_player1'
+    )
+    player2 = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='games_as_player2'
+    )
+    player1_score = models.IntegerField(default=0)
+    player2_score = models.IntegerField(default=0)
+    winner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='won_games',
+        null=True,
+        blank=True
+    )
+    played_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-played_at']
+        verbose_name_plural = 'Game Histories'
+
+    def __str__(self):
+        return f"{self.player1.username} vs {self.player2.username} - {self.played_at}"

@@ -1,0 +1,19 @@
+{% extends "core/base.html" %}
+
+{% block title %}Tạo Phòng Quiz{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Tạo Phòng Quiz Mới</h1>
+    
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <p>Nhấn nút dưới để tạo một phòng quiz mới với mã ngẫu nhiên:</p>
+            <button type="submit" class="btn btn-primary">Tạo Phòng</button>
+        </div>
+    </form>
+    
+    <p><a href="{% url 'quiz:lobby' %}">Quay lại Lobby</a></p>
+</div>
+{% endblock %}
