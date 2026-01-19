@@ -42,14 +42,11 @@
 
                     <div class="progress">
                         <p>Mức độ hoàn thành lộ trình</p>
-
-                        <div class="progress-bar-container">
-                            <div class="progress-bar"
-                                style="width: {{ progress }}%;">
-                                <span>{{ progress }}%</span>
+                          <div class="progress-bar-container" style="--target-num: {{ progress }};">
+                            <div class="fill-bar" style="--target-num: {{ progress }};">
+                                <span class="count"></span>%
                             </div>
                         </div>
-
                         <p class="progress-meta">
                             Hoàn thành {{ path.get_completed_items }} /
                             {{ path.get_total_items }} bài học
