@@ -24,8 +24,14 @@ urlpatterns = [
     #Trang Admin
     path('admin/', admin.site.urls),
 
-    # Trang chủ chính
-    path('', core_views.homepage, name='homepage'),
+    # ROOT
+    path('', core_views.root_redirect),
+
+    # Public
+    path('welcome/', core_views.public_home, name='public-home'),
+
+    # Private
+    path('home/', core_views.homepage, name='homepage'),
 
     # App accounts
     path('accounts/', include('accounts.urls')),
