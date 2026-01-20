@@ -1,15 +1,40 @@
 {% load static %}
 <link rel="stylesheet" href="{% static 'minigames/style.css' %}">
-<div class="container">
-  <h2>Chọn kiểu chơi</h2>
-  <div class="minigame-menu">
-    {% for mg in minigames %}
-      <div class="minigame-card">
-        <h3>{{ mg.name }}</h3>
-        <a href="{% url 'minigames:play_minigame' mg.code %}" class="btn">Chơi ngay</a>
-      </div>
-    {% endfor %}
+<div class="page-wrapper">
+
+  <!-- Back -->
+  <div class="nav-back">
+    <a href="{% url 'homepage' %}" class="back-home">
+      Trang chủ
+    </a>
   </div>
+
+  <!-- HERO -->
+  <section class="menu-hero">
+    <h1>🎮 Mini Game Center</h1>
+    <p>Chọn kiểu chơi bạn muốn và bắt đầu ngay</p>
+  </section>
+
+  <!-- MENU -->
+  <section class="menu-content">
+    <div class="minigame-menu">
+      {% for mg in minigames %}
+        <div class="minigame-card">
+          <div class="card-glow"></div>
+          <h3>{{ mg.name }}</h3>
+          <a href="{% url 'minigames:play_minigame' mg.code %}" class="btn">
+            Chơi ngay →
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- FOOTER HINT -->
+  <div class="menu-hint">
+    💡 Mẹo: Bạn có thể chơi lại minigame để cải thiện kết quả
+  </div>
+
 </div>
 <style>
 </style>

@@ -34,6 +34,8 @@
     </div>
   </div>
 
+  <div id="flashcardFeedback" class="flashcard-feedback"></div>
+
   <div id="readingHint" class="reading-hint hidden">
     👀 Đang đọc...
   </div>
@@ -70,7 +72,7 @@ let currentQuestionId = null;
 let currentIndex = 0;
 let totalCount = 10;
 let canProceed = true;
-const READ_DELAY = 3000; 
+const READ_DELAY = 1500; 
 
 async function createSession() {
   const res = await fetch(CREATE_SESSION_URL, {
@@ -128,6 +130,14 @@ async function finishSessionAndRedirect() {
     `/minigames/sessions/${sessionId}/summary/`;
 }
 
+function showFlashcardFeedback(type) {
+  const fb = document.getElementById("flashcardFeedback");
+  fb.className = "flashcard-feedback show " + type;
+  fb.innerText = type === "remember"
+    ? "✔ Bạn đã nhớ từ này"
+    : "✖ Chưa nhớ – hãy đọc kỹ nhé";
+}
+
 function renderCard(data) {
   currentQuestionId = data.question_id;
   currentIndex += 1;
@@ -171,9 +181,12 @@ document.getElementById("rememberBtn").onclick = async () => {
   canProceed = false;
   setButtonsDisabled(true);
 
+  showFlashcardFeedback("remember");
+
   await submitFlashcard(true);
   await loadNextCard();
 
+  document.getElementById("flashcardFeedback").className = "flashcard-feedback";
   canProceed = true;
 };
 
@@ -188,6 +201,7 @@ document.getElementById("forgetBtn").onclick = async () => {
     flipped = true;
   }
 
+  showFlashcardFeedback("forget");
   showReadingHint(true);
 
   setTimeout(async () => {
@@ -196,6 +210,7 @@ document.getElementById("forgetBtn").onclick = async () => {
     await submitFlashcard(false);
     await loadNextCard();
 
+    document.getElementById("flashcardFeedback").className = "flashcard-feedback";
     canProceed = true;
   }, READ_DELAY);
 };
