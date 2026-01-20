@@ -11,7 +11,8 @@
     <p>Level: {{ quiz.level }}</p>
 
     <hr>
-    <form method="post" action="{% url 'learning_path:quiz_submit' quiz.id %}">
+   <div>
+     <form method="post" action="{% url 'learning_path:quiz_submit' quiz.id %}">
         {% csrf_token %}
         {% for question in quiz.questions_for_quiz.all %}
             <div class="question-box">
@@ -24,7 +25,8 @@
                 {% endfor %}
             </div>
         {% endfor %}
-        <button type="submit">Nộp Quiz</button>
+       <div class="button"><button type="submit">Nộp Quiz</button></div>
     </form>
+   </div>
 </body>
 </html>

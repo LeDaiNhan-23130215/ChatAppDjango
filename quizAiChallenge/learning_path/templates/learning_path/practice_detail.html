@@ -11,7 +11,8 @@
     <p>Level: {{ practice.level }}</p>
 
     <hr>
-    <form method="post" action="{% url 'learning_path:quiz_submit' practice.id %}">
+   <div>
+     <form method="post" action="{% url 'learning_path:quiz_submit' practice.id %}">
         {% csrf_token %}
         {% for question in practice.questions_for_quiz.all %}
             <div class="question-box">
@@ -24,7 +25,8 @@
                 {% endfor %}
             </div>
         {% endfor %}
-        <button type="submit">Nộp bài luyện tập</button>
+        <div class="button"><button type="submit">Nộp bài luyện tập</button></div>
     </form>
+   </div>
 </body>
 </html>

@@ -6,7 +6,8 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
-    <h2>{{ lesson.title }}</h2>
+<div class="container">
+      <h2>{{ lesson.title }}</h2>
     <p>Skill: {{ lesson.skill_code }}</p>
     <p>Level: {{ lesson.level }}</p>
 
@@ -15,6 +16,8 @@
         📖 Nội dung bài học:
         <div>{{ lesson.content|safe }}</div>
     </div>
+
+</div>
 </body>
 </html>
 

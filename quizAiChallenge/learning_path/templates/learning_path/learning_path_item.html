@@ -6,31 +6,45 @@
     <title>{{ item.title }}</title>
 </head>
 <body>
+<div class="container">
+        <div class="learning-card">
 
-    <h2>{{ item.title }}</h2>
-    <p>Skill: {{ item.skill_code }}</p>
-    <p>Type: {{ item.item_type }}</p>
+            <h2>{{ item.title }}</h2>
+            <p>Skill: {{ item.skill_code }}</p>
+            <p>Type: {{ item.item_type }}</p>
 
-    <hr>
+            <hr>
 
-    {% if item.item_type == "LESSON" %}
-        <p>📖 Nội dung bài học (demo)</p>
-    {% elif item.item_type == "PRACTICE" %}
-        <p>📝 Bài luyện tập (demo)</p>
-    {% elif item.item_type == "QUIZ" %}
-        <p>❓ Quiz (demo)</p>
-    {% endif %}
+            <div class="content-body">
 
-    <hr>
+                {% if item.item_type == "LESSON" %}
+                <p>📖 Nội dung bài học (demo)</p>
+                {% elif item.item_type == "PRACTICE" %}
+                <p>📝 Bài luyện tập (demo)</p>
+                {% elif item.item_type == "QUIZ" %}
+                <p>❓ Quiz (demo)</p>
+                {% endif %}
 
-    {% if item.status == "UNLOCKED" %}
-        <form method="post">
-            {% csrf_token %}
-            <button type="submit">✅ Hoàn thành</button>
-        </form>
-    {% else %}
-        <p>🔒 Item chưa được mở khóa</p>
-    {% endif %}
+            </div>
 
+            <hr>
+
+            <div class="action-area">
+
+
+                {% if item.status == "UNLOCKED" %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="button">
+                       <button type="submit" class="btn-complete">✅ Hoàn thành</button>
+                    </div>
+                </form>
+                {% else %}
+                <p class="massge">🔒 Item chưa được mở khóa</p>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
 </body>
 </html>

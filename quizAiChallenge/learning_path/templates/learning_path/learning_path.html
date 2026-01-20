@@ -19,7 +19,7 @@
                     ✅ Đã hoàn thành
                 {% elif item.status == "UNLOCKED" %}
                     ▶ <a href="{% url 'learning_path:learning_path_item' item.id %}">
-                        <button>Bắt đầu</button>
+                       <div class="button"><button>Bắt đầu</button></div>
                     </a>
                 {% else %}
                     🔒 Chưa mở khóa
@@ -27,9 +27,9 @@
             </div>
         {% endfor %}
     {% else %}
-        <p>⚠️ Bạn chưa có lộ trình học.</p>
+        <p class="message">⚠️ Bạn chưa có lộ trình học.</p>
     {% endif %}
-    
-    <a href="{% url 'homepage' %}"><button>Quay về trang chủ</button></a>
+
+   <div class="button"><a href="{% url 'homepage' %}"><button>Quay về trang chủ</button></a></div>
 </body>
 </html>

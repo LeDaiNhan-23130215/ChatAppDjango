@@ -6,7 +6,8 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
-    <h2>{{ mock.title }}</h2>
+<div class="container">
+      <h2>{{ mock.title }}</h2>
     <p>Skill: {{ mock.skill_code }}</p>
     <p>Level: {{ mock.level }}</p>
 
@@ -24,7 +25,10 @@
                     {% endfor %}
                 </div>
             {% endfor %}
-        <button type="submit">Nộp Mock Exam</button>
+       <div class="button">
+           <div class="button"><button type="submit">Nộp Mock Exam</button></div>
+        </div>
     </form>
+</div>
 </body>
 </html>
