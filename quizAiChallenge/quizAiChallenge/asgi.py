@@ -1,21 +1,30 @@
-"""
-ASGI config for quizAiChallenge project.
-
-It exposes the ASGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/6.0/howto/deployment/asgi/
-"""
-
 import os
-from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
-import quiz.routing
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.security.websocket import AllowedHostsOriginValidator
+from channels.auth import AuthMiddlewareStack  # Hoặc dùng custom middleware
+from quiz.middleware import TokenAuthMiddleware  # Import custom middleware nếu cần
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'quizAiChallenge.settings')
 
+django_asgi_app = get_asgi_application()
+
+from quiz import routing  # Import sau khi setup Django
+
 application = ProtocolTypeRouter({
-    'http': get_asgi_application(), 
-    'websocket': URLRouter(quiz.routing.websocket_urlpatterns)
-    })
-
-
+    "http": django_asgi_app,
+    "websocket": AllowedHostsOriginValidator(
+        # Dùng AuthMiddlewareStack cho session-based auth
+        AuthMiddlewareStack(
+            URLRouter(
+                routing.websocket_urlpatterns
+            )
+        )
+        # HOẶC dùng custom TokenAuthMiddleware
+        # TokenAuthMiddleware(
+        #     URLRouter(
+        #         routing.websocket_urlpatterns
+        #     )
+        # )
+    ),
+})

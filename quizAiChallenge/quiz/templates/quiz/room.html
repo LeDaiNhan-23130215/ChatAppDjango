@@ -55,6 +55,43 @@
     #opponent { color: #fb923c; min-height: 22px; margin: 8px 0; font-weight: bold; }
     #scores { margin-top: 20px; font-size: 18px; display: none; font-weight: bold; color: #a3e635; }
     .debug { font-size: 11px; color: #64748b; margin-top: 15px; }
+    .error-msg { color: #ef4444; font-size: 16px; font-weight: bold; margin: 20px 0; }
+    .player-info { 
+      background: #1e293b; 
+      padding: 12px; 
+      border-radius: 8px; 
+      margin: 10px 0; 
+      border-left: 4px solid #3b82f6;
+    }
+    .waiting-status {
+      color: #fbbf24;
+      font-size: 14px;
+      margin: 10px 0;
+      font-style: italic;
+    }
+    .players-list {
+      margin: 15px 0;
+      padding: 10px;
+      background: #1e293b;
+      border-radius: 8px;
+    }
+    .player-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px;
+      margin: 5px 0;
+      background: #334155;
+      border-radius: 6px;
+    }
+    .player-badge {
+      background: #3b82f6;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -63,11 +100,22 @@
   <h2>Quiz Battle 🎯</h2>
 
   <div>Room Code: <b id="room"></b></div>
-  <div>Your role: <b id="player">-</b></div>
+  
+  <div class="player-info">
+    <div>Bạn: <b id="username">-</b></div>
+    <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">User ID: <span id="userId">-</span></div>
+  </div>
+
+  <div class="players-list" id="playersList" style="display: none;">
+    <div style="font-size: 14px; color: #94a3b8; margin-bottom: 8px;">Người chơi trong phòng:</div>
+    <div id="playersContainer"></div>
+  </div>
+
+  <div class="waiting-status" id="waitingStatus"></div>
 
   <hr>
 
-  <div id="question" aria-live="assertive">Waiting for players...</div>
+  <div id="question" aria-live="assertive">Đang kết nối...</div>
   <div id="timer" aria-live="polite"></div>
 
   <button class="option" id="btnA" onclick="sendAnswer('A')"></button>
@@ -87,31 +135,138 @@ const roomCode = window.location.pathname.split("/").filter(Boolean).pop();
 document.getElementById("room").innerText = roomCode || "Unknown";
 
 let socket;
-let myPlayer = null;
+let myUserId = null;
+let myUsername = null;
 let currentQuestionNum = 0;
 let timerInterval = null;
 let answered = false;
 let myAnswer = null;
+let playersInRoom = new Map(); // Map<user_id, username>
+let opponentUsername = null;
 
 function debug(msg) {
   console.log("Debug: " + msg);
   document.getElementById("debug").innerText = msg;
 }
 
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+function showError(message) {
+  document.getElementById("question").innerHTML = `<div class="error-msg">❌ ${message}</div>`;
+  enableButtons(false);
+  document.getElementById("timer").innerText = "";
+}
+
+function updatePlayersList() {
+  const container = document.getElementById("playersContainer");
+  const playersList = document.getElementById("playersList");
+  
+  if (playersInRoom.size === 0) {
+    playersList.style.display = "none";
+    return;
+  }
+  
+  playersList.style.display = "block";
+  container.innerHTML = "";
+  
+  playersInRoom.forEach((username, userId) => {
+    const isMe = userId === myUserId;
+    const div = document.createElement("div");
+    div.className = "player-item";
+    div.innerHTML = `
+      <span>${username}</span>
+      ${isMe ? '<span class="player-badge">BẠN</span>' : ''}
+    `;
+    container.appendChild(div);
+  });
+}
+
+function updateWaitingStatus() {
+  const status = document.getElementById("waitingStatus");
+  if (playersInRoom.size < 2) {
+    status.innerText = `⏳ Đang chờ người chơi thứ ${3 - playersInRoom.size}...`;
+    status.style.display = "block";
+  } else {
+    status.style.display = "none";
+  }
+}
+
 function connect() {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  socket = new WebSocket(`${protocol}//${window.location.host}/ws/quiz/${roomCode}/`);
+  const csrftoken = getCookie('csrftoken');
+  const sessionid = getCookie('sessionid');
+  
+  // Gửi session cookie qua query string (hoặc headers nếu browser hỗ trợ)
+  const wsUrl = `${protocol}//${window.location.host}/ws/quiz/${roomCode}/`;
+  
+  socket = new WebSocket(wsUrl);
 
-  socket.onopen = () => debug("Connected");
+  socket.onopen = () => {
+    debug("Connected - waiting for authentication...");
+  };
 
   socket.onmessage = (e) => {
     const data = JSON.parse(e.data);
     console.log("WS:", data);
 
     switch (data.type) {
+      case "error":
+        showError(data.message || "Có lỗi xảy ra");
+        debug("Error: " + (data.message || "Unknown error"));
+        break;
+
+      case "no_room":
+        showError("Phòng không tồn tại!");
+        debug("Room not found");
+        break;
+
       case "joined":
-        myPlayer = data.player_label;
-        document.getElementById("player").innerText = myPlayer.toUpperCase();
+        myUserId = data.user_id;
+        myUsername = data.username;
+        document.getElementById("username").innerText = myUsername;
+        document.getElementById("userId").innerText = myUserId;
+        
+        playersInRoom.set(myUserId, myUsername);
+        
+        // Add other players already in room
+        if (data.other_players && data.other_players.length > 0) {
+          data.other_players.forEach(player => {
+            playersInRoom.set(player.user_id, player.username);
+            opponentUsername = player.username;
+          });
+        }
+        
+        updatePlayersList();
+        updateWaitingStatus();
+        
+        document.getElementById("question").innerText = "Đang chờ người chơi khác...";
+        debug(`Joined as ${myUsername} (${data.player_count}/2)`);
+        break;
+
+      case "player_joined":
+        if (data.user_id !== myUserId) {
+          playersInRoom.set(data.user_id, data.username);
+          opponentUsername = data.username;
+          updatePlayersList();
+          updateWaitingStatus();
+          
+          document.getElementById("question").innerText = 
+            `${data.username} đã tham gia! Trận đấu sắp bắt đầu...`;
+          debug(`Player joined: ${data.username}`);
+        }
         break;
 
       case "start":
@@ -119,9 +274,16 @@ function connect() {
         break;
 
       case "player_answered":
-        if (data.player_label !== myPlayer && !answered) {
-          document.getElementById("opponent").innerText = "⚡ Đối thủ đã trả lời!";
+        if (data.user_id !== myUserId && !answered) {
+          const username = data.username || playersInRoom.get(data.user_id) || "Đối thủ";
+          document.getElementById("opponent").innerText = `⚡ ${username} đã trả lời!`;
         }
+        break;
+
+      case "stop_timer":
+        debug(`Timer stopped by server: ${data.reason}`);
+        stopClientTimer();
+        document.getElementById("timer").innerText = "⏳ Đang xử lý...";
         break;
 
       case "result":
@@ -137,18 +299,35 @@ function connect() {
     }
   };
 
-  socket.onclose = () => {
-    debug("Disconnected - reconnecting...");
+  socket.onerror = (error) => {
+    console.error("WebSocket error:", error);
+    debug("Connection error");
+  };
+
+  socket.onclose = (event) => {
+    debug(`Disconnected (${event.code}) - reconnecting...`);
+    
+    // Code 4001 = authentication failed
+    if (event.code === 4001) {
+      showError("Bạn chưa đăng nhập! Vui lòng đăng nhập trước.");
+      return;
+    }
+    
     setTimeout(connect, 3000);
   };
 }
 
 function startQuestion(data) {
+  debug(`Starting question ${data.question_num}`);
   currentQuestionNum = data.question_num;
   answered = false;
   myAnswer = null;
 
-  clearInterval(timerInterval);
+  // Clear any existing timer before starting a new one
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
 
   document.getElementById("question").innerText = `Câu ${data.question_num}: ${data.question.text}`;
 
@@ -161,27 +340,49 @@ function startQuestion(data) {
   document.getElementById("result").innerText = "";
   document.getElementById("opponent").innerText = "";
   document.getElementById("scores").style.display = "none";
+  document.getElementById("timer").innerText = "";
 
   enableButtons(true);
   startTimer(data.timer || 30);
 }
 
 function startTimer(seconds) {
-  let time = seconds;
-  document.getElementById("timer").innerText = `⏱ ${time}s`;
-  timerInterval = setInterval(() => {
-    time--;
-    document.getElementById("timer").innerText = `⏱ ${time}s`;
-    if (time <= 0) {
-      clearInterval(timerInterval);
-      document.getElementById("timer").innerText = "⏰ Hết giờ!";
-      enableButtons(false);
-      if (!answered) {
-        myAnswer = null; // Timed out
-        document.getElementById("result").innerText = "⏳ Đang xử lý...";
-      }
+    // ALWAYS clear old timer first
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
     }
-  }, 1000);
+
+    // Initialize timer with a unique ID to prevent old intervals from interfering
+    const startTime = Date.now();
+    const timerDuration = seconds * 1000;
+    const timerElement = document.getElementById("timer");
+    
+    // Display initial time
+    timerElement.innerText = `⏱ ${seconds}s`;
+
+    // Create NEW timer
+    timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const remaining = Math.max(0, seconds - elapsed);
+        
+        timerElement.innerText = `⏱ ${remaining}s`;
+
+        if (remaining <= 0) {
+            // Clear THIS interval immediately
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            timerElement.innerText = "⏰ Hết giờ!";
+            enableButtons(false);
+            
+            if (!answered) {
+                myAnswer = null;
+                document.getElementById("result").innerText = "⏳ Đang xử lý...";
+            }
+        }
+    }, 500); // Check every 500ms for better accuracy
 }
 
 function sendAnswer(letter) {
@@ -191,9 +392,9 @@ function sendAnswer(letter) {
   myAnswer = letter;
 
   clearInterval(timerInterval);
+  timerInterval = null;
   document.getElementById("timer").innerText = "⏳ Đang chờ...";
 
-  // Immediate selection highlight
   ["A","B","C","D"].forEach(l => document.getElementById("btn" + l).classList.remove("selected"));
   document.getElementById("btn" + letter).classList.add("selected");
 
@@ -207,24 +408,35 @@ function sendAnswer(letter) {
 
 function showResult(data) {
   clearInterval(timerInterval);
+  timerInterval = null;
   document.getElementById("timer").innerText = "";
 
-  // Update scores
-  document.getElementById("scores").innerText = 
-    `Điểm → Player1: ${data.scores.player1} | Player2: ${data.scores.player2}`;
-  document.getElementById("scores").style.display = "block";
+  // Update scores with usernames
+  const scoresDiv = document.getElementById("scores");
+  if (data.scores) {
+    let scoresText = "Điểm → ";
+    const scores = [];
+    
+    playersInRoom.forEach((username, userId) => {
+      // Scores from backend use string keys
+      const score = data.scores[String(userId)] || data.scores[userId] || 0;
+      const isMe = userId === myUserId;
+      scores.push(`${username}${isMe ? ' (Bạn)' : ''}: ${score}`);
+    });
+    
+    scoresDiv.innerText = scoresText + scores.join(" | ");
+    scoresDiv.style.display = "block";
+  }
 
   document.getElementById("opponent").innerText = "";
 
   const correctLetter = data.correct_answer;
 
-  // Highlight correct answer
   if (correctLetter) {
     const correctBtn = document.getElementById("btn" + correctLetter);
     if (correctBtn) correctBtn.classList.add("correct");
   }
 
-  // Handle player's answer
   let resultMsg = data.message || "";
   if (myAnswer) {
     const playerBtn = document.getElementById("btn" + myAnswer);
@@ -243,28 +455,67 @@ function showResult(data) {
 
   document.getElementById("result").innerText = resultMsg;
 }
-
+function stopClientTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    document.getElementById("timer").innerText = "";
+}
 function showFinalResult(data) {
-  clearInterval(timerInterval);
+  // Clear any existing timer
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
   enableButtons(false);
 
-  const p1 = data.scores.player1;
-  const p2 = data.scores.player2;
+  const scores = data.scores || {};
+  const scoresWithNames = data.scores_with_names || {};
+  
+  // Tìm người thắng
+  let maxScore = -1;
+  let winners = [];
+  
+  playersInRoom.forEach((username, userId) => {
+    // Scores from backend use string keys
+    const score = scores[String(userId)] || scores[userId] || 0;
+    if (score > maxScore) {
+      maxScore = score;
+      winners = [{ userId, username }];
+    } else if (score === maxScore) {
+      winners.push({ userId, username });
+    }
+  });
 
   let winner = "🤝 HÒA";
-  if (p1 > p2) winner = myPlayer === "player1" ? "🏆 BẠN THẮNG!" : "🏆 PLAYER 1 THẮNG";
-  else if (p2 > p1) winner = myPlayer === "player2" ? "🏆 BẠN THẮNG!" : "🏆 PLAYER 2 THẮNG";
+  let winnerColor = "#fbbf24";
+  
+  if (winners.length === 1) {
+    const isMe = winners[0].userId === myUserId;
+    winner = isMe ? "🏆 BẠN THẮNG!" : `🏆 ${winners[0].username.toUpperCase()} THẮNG`;
+    winnerColor = isMe ? "#22c55e" : "#3b82f6";
+  }
 
   document.getElementById("question").innerText = "🏁 TRẬN ĐẤU KẾT THÚC";
   document.getElementById("timer").innerText = "";
   document.getElementById("opponent").innerText = "";
 
   document.getElementById("result").innerText = winner;
-  document.getElementById("result").style.color = p1 !== p2 ? "#22c55e" : "#fbbf24";
+  document.getElementById("result").style.color = winnerColor;
   document.getElementById("result").style.fontSize = "24px";
 
+  // Show final scores
+  const scoresArray = [];
+  playersInRoom.forEach((username, userId) => {
+    // Scores from backend use string keys
+    const score = scores[String(userId)] || scores[userId] || 0;
+    const isMe = userId === myUserId;
+    scoresArray.push(`${username}${isMe ? ' (Bạn)' : ''}: ${score}`);
+  });
+
   document.getElementById("scores").innerText = 
-    `KẾT QUẢ CUỐI → Player1: ${p1} | Player2: ${p2}`;
+    `KẾT QUẢ CUỐI → ${scoresArray.join(" | ")}`;
   document.getElementById("scores").style.display = "block";
 }
 
@@ -276,6 +527,7 @@ function enableButtons(enable) {
   ["A","B","C","D"].forEach(l => document.getElementById("btn" + l).disabled = !enable);
 }
 
+// Initial connection
 connect();
 </script>
 

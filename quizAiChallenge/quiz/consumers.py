@@ -4,6 +4,7 @@ import logging
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from .models import Room, Question
+from accounts.models import User
 import redis.asyncio as redis
 from redis.asyncio.lock import Lock as RedisLock
 
@@ -35,7 +36,7 @@ class QuizConsumer(AsyncWebsocketConsumer):
             state = json.loads(data)
             state.setdefault('active_players', [])
             state.setdefault('used_questions', [])
-            state.setdefault('channel_to_player', {})
+            state.setdefault('channel_to_user', {})
             state.setdefault('last_results_ack', [])
             return state
         return None
@@ -57,7 +58,12 @@ class QuizConsumer(AsyncWebsocketConsumer):
 
     # DB helpers
     @database_sync_to_async
-    def get_room(self, code): return Room.objects.get(code=code)
+    def get_room(self, code):
+        return Room.objects.get(code=code)
+
+    @database_sync_to_async
+    def get_user(self, user_id):
+        return User.objects.get(id=user_id)
 
     @database_sync_to_async
     def increment_player_count(self, code):
@@ -95,6 +101,16 @@ class QuizConsumer(AsyncWebsocketConsumer):
         return Question.objects.order_by('?').first()
 
     async def connect(self):
+        # Kiểm tra authentication
+        user = self.scope.get('user')
+        if not user or not user.is_authenticated:
+            await self.close(code=4001)
+            return
+
+        self.user = user
+        self.user_id = user.id
+        self.username = user.username
+        
         self.code = self.scope['url_route']['kwargs']['code']
         self.room_group_name = f'quiz_{self.code}'
 
@@ -102,13 +118,12 @@ class QuizConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
         try:
-            await self.get_room(self.code)
+            room = await self.get_room(self.code)
         except Exception:
             await self.send(json.dumps({'type': 'no_room'}))
             await self.close()
             return
 
-        room = await self.get_room(self.code)
         if room.started:
             await self.send(json.dumps({'type': 'error', 'message': 'Match already started'}))
             await self.close()
@@ -123,55 +138,86 @@ class QuizConsumer(AsyncWebsocketConsumer):
                     'question_num': 1,
                     'used_questions': [],
                     'active_players': [],
-                    'player_label_snapshot': {},
+                    'user_snapshot': {},
                     'answers': {},
                     'answered_flags': {},
                     'auto_answered': {},
-                    'channel_to_player': {},
-                    'scores': {'player1': 0, 'player2': 0},
+                    'channel_to_user': {},
+                    'scores': {},
                     'timer_running': False,
                     'processing': False,
                     'processed': False,
                     'expected_players': 2,
-                    'last_results_by_label': None,
+                    'last_results_by_user': None,
                     'last_results_ack': [],
                 }
 
-            used = set(state['channel_to_player'].values())
-            if 'player1' not in used:
-                player = 'player1'
-            elif 'player2' not in used:
-                player = 'player2'
-            else:
+            # Kiểm tra user đã tồn tại chưa
+            existing_users = set(state['channel_to_user'].values())
+            if self.user_id in existing_users:
+                await self.send(json.dumps({'type': 'error', 'message': 'Bạn đã tham gia phòng này rồi'}))
+                await self.close()
+                return
+
+            # Kiểm tra phòng đầy chưa
+            if len(existing_users) >= 2:
                 await self.send(json.dumps({'type': 'error', 'message': 'Room full'}))
                 await self.close()
                 return
 
-            state['channel_to_player'][self.channel_name] = player
+            state['channel_to_user'][self.channel_name] = self.user_id
+            
+            # Khởi tạo score cho user nếu chưa có - sử dụng string key
+            if str(self.user_id) not in state['scores']:
+                state['scores'][str(self.user_id)] = 0
+
             await self.set_state(self.code, state)
 
         room = await self.increment_player_count(self.code)
 
+        # Get list of other players already in room
+        lock = await self.get_redis_lock(self.code)
+        async with lock:
+            state = await self.get_state(self.code)
+            other_players = []
+            if state:
+                for ch, uid in state['channel_to_user'].items():
+                    if uid != self.user_id:
+                        try:
+                            other_user = await self.get_user(uid)
+                            other_players.append({
+                                'user_id': uid,
+                                'username': other_user.username
+                            })
+                        except:
+                            pass
+
         await self.send(json.dumps({
             'type': 'joined',
-            'player_label': player,
+            'user_id': self.user_id,
+            'username': self.username,
             'player_count': room.player_count,
+            'other_players': other_players,
         }))
 
         await self.channel_layer.group_send(
             self.room_group_name,
-            {'type': 'player.joined', 'player_label': player}
+            {
+                'type': 'player.joined', 
+                'user_id': self.user_id,
+                'username': self.username
+            }
         )
 
         # Resend last result on reconnect
         lock = await self.get_redis_lock(self.code)
         async with lock:
             state = await self.get_state(self.code)
-            if state and state.get('last_results_by_label'):
-                last = state['last_results_by_label']
+            if state and state.get('last_results_by_user'):
+                last = state['last_results_by_user']
                 ack = set(state.get('last_results_ack', []))
-                if player not in ack:
-                    res = last['results'].get(player, {})
+                if str(self.user_id) not in ack:
+                    res = last['results'].get(str(self.user_id), {})
                     payload = {
                         'type': 'result',
                         'message': (f"Time up! Correct: {last.get('correct_answer')}"
@@ -187,7 +233,7 @@ class QuizConsumer(AsyncWebsocketConsumer):
         lock = await self.get_redis_lock(self.code)
         async with lock:
             state = await self.get_state(self.code)
-            if (state and len(state['channel_to_player']) == 2 and state.get('question') is None
+            if (state and len(state['channel_to_user']) == 2 and state.get('question') is None
                 and not state.get('timer_running') and not state.get('processed')):
                 await self.mark_room_started(self.code)
                 asyncio.create_task(self.send_next_question())
@@ -201,66 +247,127 @@ class QuizConsumer(AsyncWebsocketConsumer):
             state = await self.get_state(self.code)
             if not state:
                 return
-            state['channel_to_player'].pop(self.channel_name, None)
-            await self.set_state(self.code, state)
-
-        if not any(state.get('channel_to_player', {})):
-            await self.delete_state(self.code)
-            await self.mark_room_stopped(self.code)
+            state['channel_to_user'].pop(self.channel_name, None)
+            
+            if not state.get('channel_to_user'):
+                await self.set_state(self.code, state)
+                await self.delete_state(self.code)
+                await self.mark_room_stopped(self.code)
+            else:
+                await self.set_state(self.code, state)
 
     async def receive(self, text_data):
-        data = json.loads(text_data)
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError:
+            return
+
         if data.get('type') != 'answer':
             return
 
         lock = await self.get_redis_lock(self.code)
+        should_stop_timer = False
+        should_process = False
+        
         async with lock:
             state = await self.get_state(self.code)
-            if not state or self.channel_name not in state.get('active_players', []):
+            if not state:
                 return
-            if state['answered_flags'].get(self.channel_name):
+
+            # Player already answered or not in active list
+            if (self.channel_name not in state.get('active_players', [])
+                or state['answered_flags'].get(self.channel_name)):
                 return
 
             state['answered_flags'][self.channel_name] = True
             state['answers'][self.channel_name] = data['answer']
             state['auto_answered'][self.channel_name] = False
 
-            answered_count = sum(state['answered_flags'].get(ch, False) for ch in state['active_players'])
-            if answered_count == state.get('expected_players', 2) and not state.get('processing') and not state.get('processed'):
-                state['processing'] = True
-                state['timer_running'] = False
-                await self.set_state(self.code, state)
-                asyncio.create_task(self.process_answers())  # Run outside lock
+            answered_count = sum(1 for ch in state['active_players'] 
+                               if state['answered_flags'].get(ch, False))
+
+            # LAST ANSWER → Immediately stop timer and broadcast
+            if answered_count == state.get('expected_players', 2):
+                if state.get('timer_running'):
+                    state['timer_running'] = False
+                    should_stop_timer = True
+
+                # Then process results (after broadcast)
+                if not state.get('processing') and not state.get('processed'):
+                    state['processing'] = True
+                    should_process = True
 
             await self.set_state(self.code, state)
 
+        # Broadcasts OUTSIDE the lock to avoid deadlocks
+        # 1. Tell all players to stop timer
+        if should_stop_timer:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'stop_timer',
+                    'reason': 'all_answered'
+                }
+            )
+
+        # 2. Notify others that this player has answered
         await self.channel_layer.group_send(
             self.room_group_name,
-            {'type': 'player.answered', 'player_label': state['channel_to_player'].get(self.channel_name)}
+            {
+                'type': 'player.answered', 
+                'user_id': self.user_id,
+                'username': self.username
+            }
         )
+
+        # 3. Process answers if all players answered
+        if should_process:
+            asyncio.create_task(self.process_answers())
 
     async def send_next_question(self):
         lock = await self.get_redis_lock(self.code)
         async with lock:
             state = await self.get_state(self.code)
-            if not state or state['question_num'] > 10:
-                await self.channel_layer.group_send(self.room_group_name, {'type': 'match.finished', 'scores': state['scores']})
+            if not state:
+                return
+                
+            if state['question_num'] > 10:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {'type': 'finished', 'scores': state['scores']}
+                )
                 await self.delete_state(self.code)
+                await self.mark_room_stopped(self.code)
                 return
 
             q = await self.get_random_unused_question(state['used_questions'])
             if not q:
-                await self.channel_layer.group_send(self.room_group_name, {'type': 'match.finished', 'scores': state['scores']})
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {'type': 'finished', 'scores': state['scores']}
+                )
+                await self.delete_state(self.code)
+                await self.mark_room_stopped(self.code)
                 return
 
             state['question'] = {'id': q.id, 'correct': getattr(q, 'correct', None)}
             state['used_questions'].append(q.id)
-            state['active_players'] = list(state['channel_to_player'].keys())
+            state['active_players'] = list(state['channel_to_user'].keys())
 
-            snapshot = {pl: ch for ch, pl in state['channel_to_player'].items()}
-            snapshot.setdefault('player1', None)
-            snapshot.setdefault('player2', None)
-            state['player_label_snapshot'] = snapshot
+            # Snapshot user_id và username
+            snapshot = {}
+            for ch, user_id in state['channel_to_user'].items():
+                try:
+                    user = await self.get_user(user_id)
+                    snapshot[str(user_id)] = {
+                        'channel': ch,
+                        'username': user.username
+                    }
+                except Exception as e:
+                    logger.error(f"Snapshot error for user {user_id}: {e}")
+                    pass
+            state['user_snapshot'] = snapshot
+            logger.info(f"Snapshot created with {len(snapshot)} users: {list(snapshot.keys())}")
 
             state['answers'] = {ch: None for ch in state['active_players']}
             state['answered_flags'] = {ch: False for ch in state['active_players']}
@@ -269,14 +376,20 @@ class QuizConsumer(AsyncWebsocketConsumer):
             state['processing'] = False
             state['timer_running'] = True
 
-            question_payload = q.as_dict() if hasattr(q, 'as_dict') else {'text': q.text, 'a': q.a, 'b': q.b, 'c': q.c, 'd': q.d}
+            question_payload = q.as_dict() if hasattr(q, 'as_dict') else {
+                'text': q.text, 
+                'a': q.a, 
+                'b': q.b, 
+                'c': q.c, 
+                'd': q.d
+            }
 
             await self.set_state(self.code, state)
 
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    'type': 'start.quiz',
+                    'type': 'start',
                     'question': question_payload,
                     'question_num': state['question_num'],
                     'timer': 30,
@@ -287,20 +400,25 @@ class QuizConsumer(AsyncWebsocketConsumer):
 
     async def start_timer(self):
         await asyncio.sleep(30)
+
         lock = await self.get_redis_lock(self.code)
         async with lock:
             state = await self.get_state(self.code)
             if not state or not state.get('timer_running'):
                 return
+
+            # Only auto-answer if still not answered
             for ch in state['active_players']:
-                if not state['answered_flags'].get(ch):
+                if not state['answered_flags'].get(ch, False):
                     state['answered_flags'][ch] = True
                     state['auto_answered'][ch] = True
                     state['answers'][ch] = None
-            state['processing'] = True
-            state['timer_running'] = False
-            await self.set_state(self.code, state)
-            asyncio.create_task(self.process_answers())
+
+            if not state.get('processing') and not state.get('processed'):
+                state['processing'] = True
+                state['timer_running'] = False
+                await self.set_state(self.code, state)
+                asyncio.create_task(self.process_answers())
 
     async def process_answers(self):
         lock = await self.get_redis_lock(self.code)
@@ -311,33 +429,40 @@ class QuizConsumer(AsyncWebsocketConsumer):
 
             state['processed'] = True
             state['processing'] = False
-            await self.set_state(self.code, state)
 
             q = state.get('question')
             if not q:
+                await self.set_state(self.code, state)
                 return
             correct = q.get('correct')
 
-            results_by_label = {}
+            results_by_user = {}
             results_by_channel = {}
-            snapshot = state.get('player_label_snapshot', {})
+            snapshot = state.get('user_snapshot', {})
 
-            for pl in ('player1', 'player2'):
-                ch = snapshot.get(pl)
-                ans = state['answers'].get(ch) if ch else None
-                timed_out = state['auto_answered'].get(ch, False) if ch else True
+            for user_id_str, user_data in snapshot.items():
+                ch = user_data.get('channel')
+                username = user_data.get('username')
+
+                ans = state['answers'].get(ch)
+                timed_out = state['auto_answered'].get(ch, False)
                 is_correct = (ans == correct and not timed_out and correct is not None)
 
-                if is_correct and ch:
-                    state['scores'][pl] = state['scores'].get(pl, 0) + 1
+                if is_correct:
+                    state['scores'][user_id_str] = state['scores'].get(user_id_str, 0) + 1
 
-                res = {'your_answer': ans, 'is_correct': is_correct, 'timed_out': timed_out}
-                results_by_label[pl] = res
+                res = {
+                    'your_answer': ans,
+                    'is_correct': is_correct,
+                    'timed_out': timed_out,
+                    'username': username
+                }
+                results_by_user[user_id_str] = res
                 if ch:
                     results_by_channel[ch] = res
 
-            state['last_results_by_label'] = {
-                'results': results_by_label,
+            state['last_results_by_user'] = {
+                'results': results_by_user,
                 'correct_answer': correct,
                 'scores': dict(state['scores']),
                 'question_num': state['question_num']
@@ -346,24 +471,25 @@ class QuizConsumer(AsyncWebsocketConsumer):
             state['question_num'] += 1
             await self.set_state(self.code, state)
 
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'show.result',
-                    'results_by_label': results_by_label,
-                    'results_by_channel': results_by_channel,
-                    'correct_answer': correct,
-                    'scores': state['scores'],
-                    'question_num': state['question_num'] - 1
-                }
-            )
+        # Send result outside lock
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'show.result',
+                'results_by_user': results_by_user,
+                'results_by_channel': results_by_channel,
+                'correct_answer': correct,
+                'scores': state['scores'],
+                'question_num': state['question_num'] - 1
+            }
+        )
 
         await asyncio.sleep(3)
         await self.send_next_question()
 
     async def show_result(self, event):
         results_by_channel = event.get('results_by_channel', {})
-        results_by_label = event.get('results_by_label', {})
+        results_by_user = event.get('results_by_user', {})
         correct_answer = event.get('correct_answer')
         scores = event.get('scores')
         question_num = event.get('question_num')
@@ -376,7 +502,7 @@ class QuizConsumer(AsyncWebsocketConsumer):
         }
 
         sent = False
-        player_label = None
+        user_id = getattr(self, 'user_id', None)
 
         r = results_by_channel.get(self.channel_name)
         if r:
@@ -385,43 +511,46 @@ class QuizConsumer(AsyncWebsocketConsumer):
             await self.send(json.dumps({**base_payload, 'message': msg}))
             sent = True
 
-        if not sent:
+        if not sent and user_id:
             try:
                 lock = await self.get_redis_lock(self.code)
                 async with lock:
                     state = await self.get_state(self.code)
                     if state:
-                        player_label = state['channel_to_player'].get(self.channel_name)
-                        if not player_label:
-                            snapshot = state.get('player_label_snapshot', {})
-                            player_label = next((pl for pl, ch in snapshot.items() if ch == self.channel_name), None)
+                        current_user_id = state['channel_to_user'].get(self.channel_name)
+                        if not current_user_id:
+                            snapshot = state.get('user_snapshot', {})
+                            for uid, data in snapshot.items():
+                                if data.get('channel') == self.channel_name:
+                                    current_user_id = uid
+                                    break
 
-                        if player_label and player_label in results_by_label:
-                            r2 = results_by_label[player_label]
+                        if current_user_id and str(current_user_id) in results_by_user:
+                            r2 = results_by_user[str(current_user_id)]
                             msg = (f"Time up! Correct: {correct_answer}" if r2.get('timed_out')
                                    else f"Your answer: {r2.get('your_answer')} {'✓' if r2.get('is_correct') else '✗'}")
                             await self.send(json.dumps({**base_payload, 'message': msg}))
                             sent = True
             except Exception as e:
-                logger.error(f"Label lookup error: {e}")
+                logger.error(f"User lookup error: {e}")
 
         if not sent:
             await self.send(json.dumps({**base_payload, 'message': 'Kết quả đã cập nhật'}))
 
-        if player_label:
+        if user_id:
             try:
                 lock = await self.get_redis_lock(self.code)
                 async with lock:
                     state = await self.get_state(self.code)
                     if state:
                         ack = set(state.get('last_results_ack', []))
-                        ack.add(player_label)
+                        ack.add(str(user_id))
                         state['last_results_ack'] = list(ack)
                         await self.set_state(self.code, state)
             except Exception as e:
                 logger.error(f"Ack failed: {e}")
 
-    async def start_quiz(self, event):
+    async def start(self, event):
         await self.send(json.dumps({
             'type': 'start',
             'question': event['question'],
@@ -429,11 +558,40 @@ class QuizConsumer(AsyncWebsocketConsumer):
             'timer': event['timer']
         }))
 
-    async def match_finished(self, event):
-        await self.send(json.dumps({'type': 'finished', 'scores': event.get('scores')}))
+    async def finished(self, event):
+        scores = event.get('scores', {})
+        
+        # Convert scores để gửi kèm username
+        scores_with_names = {}
+        for user_id, score in scores.items():
+            try:
+                user = await self.get_user(int(user_id))
+                scores_with_names[user.username] = score
+            except:
+                scores_with_names[f'User {user_id}'] = score
+        
+        await self.send(json.dumps({
+            'type': 'finished', 
+            'scores': scores,
+            'scores_with_names': scores_with_names
+        }))
 
     async def player_answered(self, event):
-        await self.send(json.dumps({'type': 'player_answered', 'player_label': event['player_label']}))
+        await self.send(json.dumps({
+            'type': 'player_answered', 
+            'user_id': event.get('user_id'),
+            'username': event.get('username')
+        }))
+
+    async def stop_timer(self, event):
+        await self.send(json.dumps({
+            'type': 'stop_timer',
+            'reason': event.get('reason', 'server')
+        }))
 
     async def player_joined(self, event):
-        await self.send(json.dumps({'type': 'player_joined', 'player_label': event['player_label']}))
+        await self.send(json.dumps({
+            'type': 'player_joined', 
+            'user_id': event.get('user_id'),
+            'username': event.get('username')
+        }))
