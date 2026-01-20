@@ -37,16 +37,15 @@ INSTALLED_APPS = [
     'daphne',
     'channels',
     'quiz',
-    'rest_framework',
     'accounts',
     'quiz_ai_battle',
-    'core',
     'entrance_test',
-    'learning_profile',
+    'core',
     'learning_path',
+    'learning_profile',
     'lesson',
-    'minigames',
     'leaderboard',
+    'minigames',
     'user_profile',
     
     
@@ -81,6 +80,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'debug':True,
         },
     },
 ]
@@ -151,5 +151,3 @@ LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
 
 AUTH_USER_MODEL = 'accounts.User'
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'

@@ -99,6 +99,14 @@ class QuizConsumer(AsyncWebsocketConsumer):
         if qs.exists():
             return qs.order_by('?').first()
         return Question.objects.order_by('?').first()
+    
+    @database_sync_to_async
+    def get_total_max_score(self, num_questions=10):
+        """Calculate maximum possible score for quiz"""
+        from django.db.models import Sum
+        qs = Question.objects.all()[:num_questions]
+        total = qs.aggregate(total=Sum('score'))['total'] or 0
+        return total
 
     async def connect(self):
         # Kiểm tra authentication
@@ -286,11 +294,14 @@ class QuizConsumer(AsyncWebsocketConsumer):
             answered_count = sum(1 for ch in state['active_players'] 
                                if state['answered_flags'].get(ch, False))
 
+            logger.info(f"Player answered: {answered_count}/{state.get('expected_players', 2)} answered for room {self.code}")
+
             # LAST ANSWER → Immediately stop timer and broadcast
             if answered_count == state.get('expected_players', 2):
                 if state.get('timer_running'):
                     state['timer_running'] = False
                     should_stop_timer = True
+                    logger.info(f"All players answered, stopping timer for room {self.code}")
 
                 # Then process results (after broadcast)
                 if not state.get('processing') and not state.get('processed'):
@@ -350,7 +361,12 @@ class QuizConsumer(AsyncWebsocketConsumer):
                 await self.mark_room_stopped(self.code)
                 return
 
-            state['question'] = {'id': q.id, 'correct': getattr(q, 'correct', None)}
+            state['question'] = {
+                'id': q.id, 
+                'correct': getattr(q, 'correct', None),
+                'score': getattr(q, 'score', 0),
+                'explanation': getattr(q, 'explanation', '')
+            }
             state['used_questions'].append(q.id)
             state['active_players'] = list(state['channel_to_user'].keys())
 
@@ -381,7 +397,9 @@ class QuizConsumer(AsyncWebsocketConsumer):
                 'a': q.a, 
                 'b': q.b, 
                 'c': q.c, 
-                'd': q.d
+                'd': q.d,
+                'score': getattr(q, 'score', 0),
+                'explanation': getattr(q, 'explanation', '')
             }
 
             await self.set_state(self.code, state)
@@ -405,8 +423,10 @@ class QuizConsumer(AsyncWebsocketConsumer):
         async with lock:
             state = await self.get_state(self.code)
             if not state or not state.get('timer_running'):
+                logger.info(f"Timer already stopped for room {self.code}")
                 return
 
+            logger.info(f"Timer expired for room {self.code}, auto-answering remaining players")
             # Only auto-answer if still not answered
             for ch in state['active_players']:
                 if not state['answered_flags'].get(ch, False):
@@ -414,11 +434,25 @@ class QuizConsumer(AsyncWebsocketConsumer):
                     state['auto_answered'][ch] = True
                     state['answers'][ch] = None
 
-            if not state.get('processing') and not state.get('processed'):
-                state['processing'] = True
-                state['timer_running'] = False
+            # Count how many have answered after auto-answering
+            answered_count = sum(1 for ch in state['active_players'] 
+                               if state['answered_flags'].get(ch, False))
+            
+            logger.info(f"After timeout: {answered_count}/{state.get('expected_players', 2)} answered")
+            
+            # Stop timer and process if all answered
+            state['timer_running'] = False
+            
+            if answered_count == state.get('expected_players', 2):
+                if not state.get('processing') and not state.get('processed'):
+                    state['processing'] = True
+                    await self.set_state(self.code, state)
+                    asyncio.create_task(self.process_answers())
+                else:
+                    await self.set_state(self.code, state)
+            else:
+                # This shouldn't happen in a 2-player game, but handle it
                 await self.set_state(self.code, state)
-                asyncio.create_task(self.process_answers())
 
     async def process_answers(self):
         lock = await self.get_redis_lock(self.code)
@@ -435,6 +469,8 @@ class QuizConsumer(AsyncWebsocketConsumer):
                 await self.set_state(self.code, state)
                 return
             correct = q.get('correct')
+            question_score = q.get('score', 0)
+            explanation = q.get('explanation', '')
 
             results_by_user = {}
             results_by_channel = {}
@@ -448,14 +484,18 @@ class QuizConsumer(AsyncWebsocketConsumer):
                 timed_out = state['auto_answered'].get(ch, False)
                 is_correct = (ans == correct and not timed_out and correct is not None)
 
+                points_earned = 0
                 if is_correct:
-                    state['scores'][user_id_str] = state['scores'].get(user_id_str, 0) + 1
+                    points_earned = question_score
+                    state['scores'][user_id_str] = state['scores'].get(user_id_str, 0) + points_earned
 
                 res = {
                     'your_answer': ans,
                     'is_correct': is_correct,
                     'timed_out': timed_out,
-                    'username': username
+                    'username': username,
+                    'points_earned': points_earned,
+                    'explanation': explanation if not is_correct else None
                 }
                 results_by_user[user_id_str] = res
                 if ch:
@@ -465,7 +505,8 @@ class QuizConsumer(AsyncWebsocketConsumer):
                 'results': results_by_user,
                 'correct_answer': correct,
                 'scores': dict(state['scores']),
-                'question_num': state['question_num']
+                'question_num': state['question_num'],
+                'explanation': explanation
             }
             state['last_results_ack'] = []
             state['question_num'] += 1
@@ -479,18 +520,32 @@ class QuizConsumer(AsyncWebsocketConsumer):
                 'results_by_user': results_by_user,
                 'results_by_channel': results_by_channel,
                 'correct_answer': correct,
+                'explanation': explanation,
                 'scores': state['scores'],
                 'question_num': state['question_num'] - 1
             }
         )
-
-        await asyncio.sleep(3)
+        
+        # Also send stop_timer to ensure all clients stop their timers
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'stop_timer',
+                'reason': 'results_shown'
+            }
+        )
+        
+        # Wait for player to read explanation and results (5 seconds)
+        logger.info(f"Waiting for players to read results for room {self.code}")
+        await asyncio.sleep(5)
+        
         await self.send_next_question()
 
     async def show_result(self, event):
         results_by_channel = event.get('results_by_channel', {})
         results_by_user = event.get('results_by_user', {})
         correct_answer = event.get('correct_answer')
+        explanation = event.get('explanation', '')
         scores = event.get('scores')
         question_num = event.get('question_num')
 
@@ -498,7 +553,8 @@ class QuizConsumer(AsyncWebsocketConsumer):
             'type': 'result',
             'scores': scores,
             'question_num': question_num,
-            'correct_answer': correct_answer
+            'correct_answer': correct_answer,
+            'explanation': explanation
         }
 
         sent = False
@@ -506,8 +562,12 @@ class QuizConsumer(AsyncWebsocketConsumer):
 
         r = results_by_channel.get(self.channel_name)
         if r:
-            msg = (f"Time up! Correct: {correct_answer}" if r.get('timed_out')
-                   else f"Your answer: {r.get('your_answer')} {'✓' if r.get('is_correct') else '✗'}")
+            if r.get('timed_out'):
+                msg = f"Time up! Correct: {correct_answer}"
+            elif r.get('is_correct'):
+                msg = f"Your answer: {r.get('your_answer')} ✓ (+{r.get('points_earned', 0)} points)"
+            else:
+                msg = f"Your answer: {r.get('your_answer')} ✗"
             await self.send(json.dumps({**base_payload, 'message': msg}))
             sent = True
 
@@ -527,8 +587,12 @@ class QuizConsumer(AsyncWebsocketConsumer):
 
                         if current_user_id and str(current_user_id) in results_by_user:
                             r2 = results_by_user[str(current_user_id)]
-                            msg = (f"Time up! Correct: {correct_answer}" if r2.get('timed_out')
-                                   else f"Your answer: {r2.get('your_answer')} {'✓' if r2.get('is_correct') else '✗'}")
+                            if r2.get('timed_out'):
+                                msg = f"Time up! Correct: {correct_answer}"
+                            elif r2.get('is_correct'):
+                                msg = f"Your answer: {r2.get('your_answer')} ✓ (+{r2.get('points_earned', 0)} points)"
+                            else:
+                                msg = f"Your answer: {r2.get('your_answer')} ✗"
                             await self.send(json.dumps({**base_payload, 'message': msg}))
                             sent = True
             except Exception as e:
@@ -570,10 +634,15 @@ class QuizConsumer(AsyncWebsocketConsumer):
             except:
                 scores_with_names[f'User {user_id}'] = score
         
+        # Tính tổng điểm tối đa có thể
+        total_max_score = await self.get_total_max_score()
+        
         await self.send(json.dumps({
             'type': 'finished', 
             'scores': scores,
-            'scores_with_names': scores_with_names
+            'scores_with_names': scores_with_names,
+            'total_max_score': total_max_score,
+            'message': 'Quiz completed! Final scores:'
         }))
 
     async def player_answered(self, event):
