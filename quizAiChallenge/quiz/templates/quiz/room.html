@@ -54,6 +54,32 @@
     #result { margin-top: 15px; font-size: 19px; min-height: 30px; font-weight: bold; color: #fbbf24; }
     #opponent { color: #fb923c; min-height: 22px; margin: 8px 0; font-weight: bold; }
     #scores { margin-top: 20px; font-size: 18px; display: none; font-weight: bold; color: #a3e635; }
+    #explanation { 
+      margin-top: 12px; 
+      padding: 12px; 
+      background: #1e293b; 
+      border-left: 4px solid #f97316;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #cbd5e1;
+      font-weight: normal;
+      line-height: 1.5;
+      display: none;
+      min-height: 30px;
+    }
+    #pointsEarned {
+      margin-top: 8px;
+      font-size: 16px;
+      color: #22c55e;
+      font-weight: bold;
+      display: none;
+    }
+    #totalMaxScore {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #94a3b8;
+      display: none;
+    }
     .debug { font-size: 11px; color: #64748b; margin-top: 15px; }
     .error-msg { color: #ef4444; font-size: 16px; font-weight: bold; margin: 20px 0; }
     .player-info { 
@@ -125,7 +151,10 @@
 
   <div id="opponent" aria-live="polite"></div>
   <div id="result" aria-live="polite"></div>
+  <div id="explanation" aria-live="polite"></div>
+  <div id="pointsEarned" aria-live="polite"></div>
   <div id="scores"></div>
+  <div id="totalMaxScore"></div>
   
   <div class="debug" id="debug">Connecting...</div>
 </div>
@@ -283,7 +312,9 @@ function connect() {
       case "stop_timer":
         debug(`Timer stopped by server: ${data.reason}`);
         stopClientTimer();
-        document.getElementById("timer").innerText = "⏳ Đang xử lý...";
+        if (data.reason !== 'results_shown') {
+          document.getElementById("timer").innerText = "⏳ Đang xử lý...";
+        }
         break;
 
       case "result":
@@ -339,6 +370,10 @@ function startQuestion(data) {
 
   document.getElementById("result").innerText = "";
   document.getElementById("opponent").innerText = "";
+  document.getElementById("explanation").style.display = "none";
+  document.getElementById("explanation").innerText = "";
+  document.getElementById("pointsEarned").style.display = "none";
+  document.getElementById("pointsEarned").innerText = "";
   document.getElementById("scores").style.display = "none";
   document.getElementById("timer").innerText = "";
 
@@ -431,6 +466,7 @@ function showResult(data) {
   document.getElementById("opponent").innerText = "";
 
   const correctLetter = data.correct_answer;
+  const explanation = data.explanation || "";
 
   if (correctLetter) {
     const correctBtn = document.getElementById("btn" + correctLetter);
@@ -438,19 +474,50 @@ function showResult(data) {
   }
 
   let resultMsg = data.message || "";
+  const pointsEarnedDiv = document.getElementById("pointsEarned");
+  const explanationDiv = document.getElementById("explanation");
+
   if (myAnswer) {
     const playerBtn = document.getElementById("btn" + myAnswer);
     if (myAnswer === correctLetter) {
       playerBtn.classList.remove("selected");
       playerBtn.classList.add("correct");
-      resultMsg = "✅ Đúng rồi! +1 điểm";
+      resultMsg = "✅ Đúng rồi!";
+      
+      // Show points earned
+      const pointsMatch = data.message.match(/\+(\d+)\s+points/);
+      if (pointsMatch) {
+        const points = pointsMatch[1];
+        pointsEarnedDiv.innerText = `+${points} điểm`;
+        pointsEarnedDiv.style.display = "block";
+      }
+      
+      explanationDiv.style.display = "none";
     } else {
       playerBtn.classList.remove("selected");
       playerBtn.classList.add("wrong");
-      resultMsg = "❌ Sai rồi...";
+      resultMsg = "❌ Sai rồi!";
+      pointsEarnedDiv.style.display = "none";
+      
+      // Show explanation for wrong answer
+      if (explanation) {
+        explanationDiv.innerHTML = `<strong>💡 Giải thích:</strong> ${explanation}`;
+        explanationDiv.style.display = "block";
+      } else {
+        explanationDiv.style.display = "none";
+      }
     }
   } else {
     resultMsg = "⏰ Hết giờ! Đáp án đúng: " + correctLetter;
+    pointsEarnedDiv.style.display = "none";
+    
+    // Show explanation for timeout
+    if (explanation) {
+      explanationDiv.innerHTML = `<strong>💡 Giải thích:</strong> ${explanation}`;
+      explanationDiv.style.display = "block";
+    } else {
+      explanationDiv.style.display = "none";
+    }
   }
 
   document.getElementById("result").innerText = resultMsg;
@@ -459,8 +526,8 @@ function stopClientTimer() {
     if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
+        debug("Client timer stopped");
     }
-    document.getElementById("timer").innerText = "";
 }
 function showFinalResult(data) {
   // Clear any existing timer
@@ -472,6 +539,7 @@ function showFinalResult(data) {
 
   const scores = data.scores || {};
   const scoresWithNames = data.scores_with_names || {};
+  const totalMaxScore = data.total_max_score || 0;
   
   // Tìm người thắng
   let maxScore = -1;
@@ -500,6 +568,8 @@ function showFinalResult(data) {
   document.getElementById("question").innerText = "🏁 TRẬN ĐẤU KẾT THÚC";
   document.getElementById("timer").innerText = "";
   document.getElementById("opponent").innerText = "";
+  document.getElementById("explanation").style.display = "none";
+  document.getElementById("pointsEarned").style.display = "none";
 
   document.getElementById("result").innerText = winner;
   document.getElementById("result").style.color = winnerColor;
@@ -514,8 +584,12 @@ function showFinalResult(data) {
     scoresArray.push(`${username}${isMe ? ' (Bạn)' : ''}: ${score}`);
   });
 
-  document.getElementById("scores").innerText = 
-    `KẾT QUẢ CUỐI → ${scoresArray.join(" | ")}`;
+  let finalScoresText = `KẾT QUẢ CUỐI → ${scoresArray.join(" | ")}`;
+  if (totalMaxScore > 0) {
+    finalScoresText += ` (Điểm tối đa: ${totalMaxScore})`;
+  }
+
+  document.getElementById("scores").innerText = finalScoresText;
   document.getElementById("scores").style.display = "block";
 }
 

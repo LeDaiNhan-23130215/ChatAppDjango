@@ -4,11 +4,24 @@ import random
 import string
 from common.constants import SkillCode, SkillLevel
 class Question(models.Model):
+    QUESTION_TYPE_CHOICES = [
+        ('grammar', 'Grammar'),
+        ('vocabulary', 'Vocabulary'),
+        ('sentence_completion', 'Sentence Completion'),
+    ]
+    
+    DIFFICULTY_CHOICES = [
+        ('beginner', 'Beginner'),
+        ('intermediate', 'Intermediate'),
+        ('advanced', 'Advanced'),
+    ]
+
     text = models.TextField()
-    a = models.CharField(max_length=255)
-    b = models.CharField(max_length=255)
-    c = models.CharField(max_length=255)
-    d = models.CharField(max_length=255)
+    directive = models.TextField(blank=True, null=True, help_text="e.g., 'Choose the best word/phrase to complete the sentence:'")
+    a = models.TextField()
+    b = models.TextField()
+    c = models.TextField()
+    d = models.TextField()
     correct = models.CharField(
         max_length=1,
         choices=[
@@ -18,8 +31,22 @@ class Question(models.Model):
             ('D', 'D'),
         ]
     )
+    explanation = models.TextField(blank=True, null=True, help_text="Detailed explanation why the answer is correct")
+    question_type = models.CharField(
+        max_length=20,
+        choices=QUESTION_TYPE_CHOICES,
+        blank=True,
+        null=True
+    )
     category = models.CharField(max_length=100, blank=True, null=True)
-    difficulty = models.CharField(max_length=20, blank=True, null=True)
+    difficulty = models.CharField(
+        max_length=20,
+        choices=DIFFICULTY_CHOICES,
+        blank=True,
+        null=True
+    )
+    score = models.IntegerField(default=0, help_text="Points for correct answer (0-10)")
+    context = models.CharField(max_length=255, blank=True, null=True, help_text="e.g., 'coding', 'debugging', 'agile meetings'")
 
     def __str__(self):
         return self.text[:50]
@@ -28,10 +55,17 @@ class Question(models.Model):
         return {
             "id": self.id,
             "text": self.text,
+            "directive": self.directive,
             "a": self.a,
             "b": self.b,
             "c": self.c,
             "d": self.d,
+            "correct": self.correct,
+            "explanation": self.explanation,
+            "question_type": self.question_type,
+            "difficulty": self.difficulty,
+            "score": self.score,
+            "context": self.context,
         }
 
 
