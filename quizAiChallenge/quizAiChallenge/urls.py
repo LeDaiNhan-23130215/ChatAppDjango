@@ -53,6 +53,10 @@ urlpatterns = [
 
     #App Leaderboard
     path("leaderboard/", include("leaderboard.urls")),
+
+    #App User Profile
+    path('user_profile/', include("user_profile.urls")),
+    
 ]
 
 urlpatterns += static(

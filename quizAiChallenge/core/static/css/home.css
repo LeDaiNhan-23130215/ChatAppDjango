@@ -32,7 +32,23 @@ body {
     cursor: pointer;
 }
 
+.user-controls span a {
+    color: #dfe6e9;
+    text-decoration: none;
+}
+
+.user-controls span a:hover {
+    color: #bdebff;
+    text-decoration: none;
+}
+
 .user-controls a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+.user-controls a:hover {
+    color: #2980b9;
     text-decoration: none;
 }
 

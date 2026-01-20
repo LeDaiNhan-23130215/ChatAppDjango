@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'lesson',
     'minigames',
     'leaderboard',
+    'user_profile',
+    
     
     'django.contrib.admin',
     'django.contrib.auth',
