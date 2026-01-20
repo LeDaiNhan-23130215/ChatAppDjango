@@ -1,37 +1,53 @@
 {% block content %}
 {% load static %}
 <link rel="stylesheet" href="{% static 'minigames/style.css' %}">
-<h2>🎉 Hoàn thành Flashcard</h2>
 
-<div class="summary-card">
-  <div class="summary-item total">
-    📚 Tổng số thẻ
-    <strong>{{ total }}</strong>
-  </div>
+<div class="summary-page">
 
-  <div class="summary-row">
-    <div class="summary-item remembered">
-      ✅ Nhớ
-      <strong>{{ remembered }}</strong>
+  <div class="summary-card-v2">
+
+    <!-- Header -->
+    <div class="summary-header">
+      <div class="summary-icon">🎉</div>
+      <h1>Hoàn thành Flashcard</h1>
+      <p>Bạn đã hoàn thành phiên học này</p>
     </div>
 
-    <div class="summary-item forgotten">
-      ❌ Không nhớ
-      <strong>{{ forgotten }}</strong>
+    <!-- Stats -->
+    <div class="summary-stats">
+
+      <div class="stat-box total">
+        <span class="label">📚 Tổng số thẻ</span>
+        <span class="value">{{ total }}</span>
+      </div>
+
+      <div class="stat-box remembered">
+        <span class="label">✅ Nhớ</span>
+        <span class="value">{{ remembered }}</span>
+      </div>
+
+      <div class="stat-box forgotten">
+        <span class="label">❌ Không nhớ</span>
+        <span class="value">{{ forgotten }}</span>
+      </div>
     </div>
-  </div>
 
-  <div class="summary-accuracy">
-    🎯 Độ nhớ: <strong>{{ accuracy }}%</strong>
-  </div>
+    <!-- Accuracy -->
+    <div class="summary-accuracy-v2">
+      🎯 Độ nhớ
+      <strong>{{ accuracy }}%</strong>
+    </div>
 
-  <div class="summary-actions">
-    <a href="{% url 'minigames:minigames_menu' %}" class="btn">
-      🏠 Về trang chủ
-    </a>
-    <a href="{% url 'minigames:play_minigame' 'flashcard' %}" class="btn secondary">
-      🔁 Chơi lại
-    </a>
+    <!-- Actions -->
+    <div class="summary-actions">
+      <a href="{% url 'minigames:minigames_menu' %}" class="btn">
+        🏠 Về Menu
+      </a>
+      <a href="{% url 'minigames:play_minigame' 'flashcard' %}" class="btn secondary">
+        🔁 Chơi lại
+      </a>
+    </div>
+
   </div>
 </div>
 {% endblock %}

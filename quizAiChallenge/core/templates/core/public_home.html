@@ -1,0 +1,93 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Trang Chủ{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/public_home.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<!-- ================= HERO ================= -->
+<section class="hero-section">
+    <h1>ARE YOU READY FOR THE CHALLENGE?</h1>
+    <p>Nền tảng luyện TOEIC thông minh với AI & lộ trình cá nhân hóa</p>
+</section>
+
+<!-- ================= CHALLENGE CARDS (LOCKED) ================= -->
+<section class="challenge-cards-container locked">
+    <div class="overlay">
+        <p>🔒 Đăng nhập để mở khóa thử thách</p>
+        <a href="{% url 'login' %}">
+            <button>Đăng nhập</button>
+        </a>
+        <a href="{% url 'register' %}">
+            <button>Đăng ký</button>
+        </a>
+    </div>
+
+    <div class="challenge-card">
+        <h3 class="card-title">AI Challenge</h3>
+        <img class="challenge-img" src="{% static 'img/ai challenge.jpg' %}" alt="AI Challenge">
+    </div>
+
+    <div class="challenge-card">
+        <h3 class="card-title">User Challenge</h3>
+        <img class="challenge-img" src="{% static 'img/user challenge.jpg' %}" alt="User Challenge">
+    </div>
+</section>
+
+<!-- ================= DASHBOARD SUMMARY (LOCKED) ================= -->
+<section id="dashboard-summary" class="container locked-section">
+    <div class="overlay">
+        🔒 Đăng nhập để xem tiến độ học tập
+    </div>
+
+    <div class="card">
+        <h2>Tiến độ của tôi</h2>
+        <p>Mục tiêu điểm: ???</p>
+
+        <div class="progress-bar-container">
+            <div class="progress-bar" style="width: 60%;">
+                ??
+            </div>
+        </div>
+
+        <p class="progress-meta">
+            Hoàn thành ?? / ?? bài học
+        </p>
+    </div>
+
+    <div class="card">
+        <h2>Bảng Xếp Hạng Top 3</h2>
+
+        <ol>
+            <li>🥇 UserOne <span class="score">1500 ELO</span></li>
+            <li>🥈 UserTwo <span class="score">1450 ELO</span></li>
+            <li>🥉 UserThree <span class="score">1400 ELO</span></li>
+        </ol>
+    </div>
+</section>
+
+<!-- ================= MINI GAMES (LOCKED) ================= -->
+<section id="mini-games-preview" class="container locked-section">
+    <div class="overlay">
+        🔒 Đăng nhập để chơi Mini Games
+    </div>
+
+    <h2>Chơi Mini Games Thư Giãn</h2>
+
+    <div class="mini-games-grid">
+        <div class="game-card">
+            <h3>Vocab Velocity</h3>
+            <p>Trắc nghiệm từ vựng tốc độ cao.</p>
+        </div>
+        <div class="game-card">
+            <h3>Logic Ladder</h3>
+            <p>Bài tập logic nhanh.</p>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

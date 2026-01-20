@@ -23,12 +23,12 @@
                 <li><a href="{% url 'quiz_ai_battle:start_match' %}">AI Challenge</a></li>
                 <li><a href="{% url 'learning_path:learning_path' %}">Lộ trình học</a></li>
                 <li><a href="{% url 'minigames:minigames_menu' %}">Mini Games</a></li>
-                <li><a href="#leaderboard">Leaderboard</a></li>
+                <li><a href="{% url 'leaderboard:leaderboard' %}">Leaderboard</a></li>
             </ul>
         </nav>
         <div class="user-controls">
             {% if user.is_authenticated %}
-                <span>Xin chào <b>{{ user.username }}</b></span>
+                <span>Xin chào <a href="{% url 'profile:profile' %}"><b>{{ user.username }}</b></a></span>
                 <a href="{% url 'logout' %}">Đăng xuất</a>
             {% else %}
                 <a href="{% url 'login' %}">Đăng nhập / Đăng ký</a>

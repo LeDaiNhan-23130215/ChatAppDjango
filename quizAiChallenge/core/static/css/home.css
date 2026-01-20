@@ -4,11 +4,11 @@
     padding: 0;
     font-family: sans-serif;
 }
-
 body {
     background-color: #f4f7f9;
     color: #333;
     line-height: 1.6;
+    overflow-x: hidden;
 }
 
 #main-header {
@@ -22,23 +22,34 @@ body {
     position: sticky;
     top: 0;
     z-index: 1000;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .logo {
     font-size: 1.5em;
     font-weight: bold;
     margin-right: auto;
+    cursor: pointer;
+}
+
+.user-controls span a {
+    color: #dfe6e9;
+    text-decoration: none;
+}
+
+.user-controls span a:hover {
+    color: #bdebff;
+    text-decoration: none;
 }
 
 .user-controls a {
     color: #3498db;
-    text-decoration: none
+    text-decoration: none;
 }
 
 .user-controls a:hover {
-    color: #3fb2ff;
-    text-decoration: none
+    color: #2980b9;
+    text-decoration: none;
 }
 
 .main-nav {
@@ -58,90 +69,70 @@ body {
     color: white;
     text-decoration: none;
     font-weight: 500;
+    position: relative;
     transition: color 0.3s;
 }
 
-.main-nav ul li a:hover {
+.main-nav ul li a::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -5px;
+    left: 0;
+    background-color: #3498db;
+    transition: width 0.3s;
+}
+
+.main-nav ul li a:hover::after {
+    width: 100%;
+}
+
+.main-nav ul li .active{
     color: #3498db;
 }
 
 #login-btn {
-    background-color: green;
+    background-color: #2ecc71;
     color: white;
     border: none;
-    padding: 8px 15px;
+    padding: 8px 18px;
     border-radius: 5px;
     cursor: pointer;
     font-weight: bold;
-    transition: background-color 0.3s;
+    transition: all 0.3s ease;
 }
 
 #login-btn:hover {
-    background-color: #c0392b;
+    background-color: #27ae60;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
 }
-.main-nav ul li .active{
-    color: #3498db;
-}
+
 .container {
-    width: 90%;
+    width: 95%;
     max-width: 1200px;
     margin: 30px auto;
     display: flex;
     gap: 20px;
-}
-
-.progress-bar-container {
-    width: 100%;
-    height: 16px;
-    background-color: #f1f5f9;
-    border-radius: 999px;
-    overflow: hidden;
-    margin-top: 8px;
-}
-
-.progress-bar-container div {
-    width: 70%;
-    background-color: rgb(13, 221, 13);
-    border-radius: 20px;
-    padding: 2px;
-}
-.progress-bar-container div p{
-   text-align: right;
-   font-size: 10px;
-   color: white;
-}
-
-.progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #2ecc71, #22c55e);
-    text-align: center;
-    color: #ffffff;
-    font-size: 11px;
-    font-weight: 500;
-    line-height: 16px;
-    transition: width 0.4s ease;
-    box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.2);
-}
-
-.progress-meta {
-    font-size: 13px;
-    color: #64748b;
-    margin-top: 6px;
+    animation: fadeInUp 0.8s ease-out;
 }
 
 .hero-section {
-    margin: 10px;
-    border-radius: 10px;
-    background-color: #3498db;
+    margin: 20px;
+    border-radius: 15px;
+    background: linear-gradient(135deg, #3498db, #2980b9);
     color: white;
-    padding: 10px 5%;
+    padding: 40px 5%;
     text-align: center;
-    margin-bottom: 20px;
+    animation: fadeInUp 0.6s ease-out;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
 .hero-section h1 {
-    font-size: 2.5em;
-    margin-bottom: 10px;
+    font-size: 2.8em;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
 }
 
 .cta-button {
@@ -161,12 +152,46 @@ body {
     background-color: #27ae60;
 }
 
+.progress-bar-container {
+    background-color: #dfe6e9;
+    border-radius: 20px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.fill-bar {
+    width: calc(var(--target-num) * 1%);
+    height: 20px;
+    background: linear-gradient(90deg, #2ecc71, #27ae60);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    transition: width 1.5s cubic-bezier(0.1, 0.42, 0.41, 1);
+    animation: progressFill 2s ease-in-out;
+}
+
+.count {
+    animation: counter 2s ease-out forwards;
+    counter-reset: num var(--num);
+}
+
+.count::after {
+    content: counter(num);
+}
+
 .card {
-    background-color: #e0e0e0;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    background-color: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s;
     flex: 1;
+}
+
+.card:hover {
+    transform: translateY(-5px);
 }
 
 #dashboard-summary .progress-tracking {
@@ -180,6 +205,7 @@ body {
 #mini-games-preview{
     display: block;
 }
+
 #mini-games-preview h2 {
     margin-bottom: 20px;
     text-align: center; 
@@ -188,7 +214,7 @@ body {
 
 .mini-games-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); 
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px; 
     width: 100%;
     margin-top: 10px;
@@ -196,18 +222,19 @@ body {
 
 .game-card {
     background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    padding: 25px;
+    border-radius: 15px;
     text-decoration: none;
     color: #333;
     text-align: center;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: all 0.3s ease;
+    border-bottom: 4px solid transparent;
 }
 
 .game-card:hover {
-    transform: translateY(-5px); 
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-8px);
+    border-bottom-color: #3498db;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
 }
 
 .game-icon {
@@ -226,39 +253,32 @@ body {
     color: #7f8c8d; 
 }
 
-/* Footer */
-footer {
-    text-align: center;
-    padding: 20px;
-    background-color: #333;
-    color: #ccc;
-    margin-top: 40px;
-}
-
 .challenge-cards-container {
-    display: flex; 
-    justify-content: center; 
-    gap: 30px; 
-    padding: 40px 20px;
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    padding: 20px;
     max-width: 1200px;
-    margin: 0 auto; 
+    margin: 0 auto;
 }
 
 .challenge-card {
-    flex: 1; 
+    flex: 1;
     max-width: 450px;
-    padding: 5px;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease-in-out;
+    padding: 20px;
+    border-radius: 20px;
+    background: white;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     text-align: center;
 }
 
 .challenge-card:hover {
-    transform: translateY(-5px); 
+    transform: scale(1.03) translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
     cursor: pointer;
 }
-
 
 .card-title {
     font-size: 1.8rem;
@@ -272,64 +292,157 @@ footer {
     border: 1px solid #ffcc00;
 }
 
-.user-challenge .primary-btn {
-    background-color: #ffaa00; 
-    color: white;
-}
-
-.user-challenge .primary-btn:hover {
-    background-color: #cc8800;
-}
-
 .ai-challenge {
     background-color: #e6f7ff;
     border: 1px solid #0099e6;
 }
 
-.ai-challenge .secondary-btn {
-    background-color: #007bff;
-    color: white;
+.challenge-img {
+    width: 60%;
+    margin-top: 15px;
+    border-radius: 10px;
+    transition: transform 0.5s;
 }
 
-.ai-challenge .secondary-btn:hover {
-    background-color: #0056b3;
+.challenge-card:hover .challenge-img {
+    transform: rotate(2deg) scale(1.1);
 }
-.challenge-img{
-    width: 50%;
-}
-.user-challenge-link{
+
+.user-challenge-link, .ai-challenge-link {
     text-decoration: none;
 }
-.ai-challenge-link{
-    text-decoration: none;
-}
-.viewall{
+
+.viewall {
     text-align: center;
     margin-top: 10px;
 }
-.card a button{
-    background: white;
-    border-radius: 8px;
+button {
+    background: #3498db;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-weight: bold;
+    transition: all 0.3s;
     border: none;
-    text-decoration: none;
     cursor: pointer;
-    font-size: 15px;
-    padding: 5px;
-    margin-top: 10px;
 }
-.card a button:hover{
-background-color: #2ecc71;
+button:hover {
+    background: #2ecc71;
+    letter-spacing: 1px;
+    box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
 }
-.leaderboard-snippet ol{
+
+.leaderboard-snippet ol {
     margin-left: 15px;
 }
-.leaderboard-snippet h2{
+
+.leaderboard-snippet h2 {
     text-align: center;
 }
-li{
+
+li {
     position: relative;
 }
-.score{
+
+.leaderboard-snippet li {
+    padding: 12px;
+    margin-bottom: 8px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: all 0.2s;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    animation: slideInLeft 0.5s ease-out forwards;
+    opacity: 0;
+}
+
+.leaderboard-snippet li:nth-child(1) { animation-delay: 0.1s; border-left: 4px solid #ffd700; }
+.leaderboard-snippet li:nth-child(2) { animation-delay: 0.2s; border-left: 4px solid #c0c0c0; }
+.leaderboard-snippet li:nth-child(3) { animation-delay: 0.3s; border-left: 4px solid #cd7f32; }
+
+.leaderboard-snippet li:hover {
+    background: #eef2f3;
+    transform: translateX(10px);
+}
+
+.score {
     position: absolute;
-    right: 20px;  
+    right: 20px; 
+}
+
+footer {
+    padding: 30px;
+    background-color: #2c3e50;
+    color: #bdc3c7;
+    margin-top: 50px;
+    text-align: center;
+}
+
+/* Keyframes cho hiệu ứng xuất hiện */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes progressFill {
+    from { width: 0; }
+}
+
+@keyframes fill-bar {
+    from {
+        width: 0%;
+    }
+    to {
+        width: calc(var(--target-num) * 1%);
+    }
+}
+
+@keyframes counter {
+  from {
+    --num: 0;
+  }
+  to {
+    --num: var(--target-num);
+  }
+}
+
+@property --num {
+  syntax: "<integer>";
+  initial-value: 0;
+  inherits: false;
+}
+.locked {
+    position: relative;
+    filter: blur(1.5px);
+    pointer-events: none;
+}
+
+.locked .overlay {
+    pointer-events: all;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
 }

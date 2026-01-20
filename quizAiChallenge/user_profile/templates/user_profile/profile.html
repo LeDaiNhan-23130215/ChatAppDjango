@@ -1,0 +1,135 @@
+{% extends "core/base.html" %}
+{% block title %}Hồ sơ cá nhân{% endblock %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <title>Profile</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+</head>
+
+<section class="profile-wrapper">
+    <section class="profile-card">
+        <h2>👤 Thông tin cá nhân</h2>
+
+<section class="profile-card">
+    <div class="profile-info-grid">
+        <p><b>Tên đăng nhập:</b> {{ user.username }}</p>
+        <p><b>Email:</b> {{ user.email }}</p>
+
+        {% if user.birth_day %}
+            <p><b>Ngày sinh:</b> {{ user.birth_day|date:"d/m/Y" }}</p>
+        {% endif %}
+
+        {% if user.declared_level %}
+            <p>
+                <b>Trình độ tự đánh giá:</b>
+                <span class="level-badge">{{ user.get_declared_level_display }}</span>
+            </p>
+        {% endif %}
+
+        {% if user.goals %}
+            <p><b>Mục tiêu học tập:</b> {{ user.get_goals_display }}</p>
+        {% endif %}
+
+        {% if user.education %}
+            <p><b>Học vấn:</b> {{ user.get_education_display }}</p>
+        {% endif %}
+
+        {% if user.profession %}
+            <p><b>Nghề nghiệp:</b> {{ user.get_profession_display }}</p>
+        {% endif %}
+
+        {% if user.referred_frequency %}
+            <p><b>Tần suất học mong muốn:</b> {{ user.get_referred_frequency_display }}</p>
+        {% endif %}
+
+        {% if user.motivation_level %}
+            <p><b>Động lực học tập:</b> {{ user.motivation_level }}/10</p>
+        {% endif %}
+
+        {% if user.hobby %}
+            <p><b>Sở thích:</b> {{ user.get_hobby_display }}</p>
+        {% endif %}
+    </div>
+</section>
+</section class="profile-card">
+    <h2>📊 Thống kê kỹ năng</h2>
+
+    <div class="chart-slider fade-up">
+        <div class="chart-card">
+            <h3>🎯 Độ chính xác theo kỹ năng</h3>
+            <canvas id="skillChart"></canvas>
+        </div>
+
+        <div class="chart-card">
+            <h3>📚 Tỷ lệ Listening vs Reading</h3>
+            <canvas id="sectionChart"></canvas>
+        </div>
+    </div>
+</section>
+
+<script>
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('show');
+            }
+        });
+    }, {
+        threshold: 0.3
+    });
+
+    document.querySelectorAll('.fade-up').forEach(el => {
+        observer.observe(el);
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const skillData = {{ skill_accuracy|default:"[]"|safe }};
+    const sectionData = {{ section_accuracy|default:"[]"|safe }};
+
+    if (skillData.length > 0) {
+        new Chart(document.getElementById('skillChart'), {
+            type: 'bar',
+            data: {
+                labels: skillData.map(i => i.skill),
+                datasets: [{
+                    label: 'Accuracy (%)',
+                    data: skillData.map(i => i.avg_accuracy * 100),
+                    backgroundColor: '#2563eb',
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 1200,
+                    easing: 'easeOutQuart'
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    }
+
+    if (sectionData.length > 0) {
+        new Chart(document.getElementById('sectionChart'), {
+            type: 'pie',
+            data: {
+                labels: sectionData.map(i => i.section),
+                datasets: [{
+                    data: sectionData.map(i => i.avg_accuracy * 100),
+                }]
+            }
+        });
+    }
+</script>
+{% endblock %}

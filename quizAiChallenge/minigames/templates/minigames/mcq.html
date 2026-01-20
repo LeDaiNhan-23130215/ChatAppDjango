@@ -7,12 +7,33 @@
   <link rel="stylesheet" href="{% static 'minigames/style.css' %}">
 </head>
 <body>
-  <div id="game">
-    <div id="progress">Câu: <span id="count">0</span></div>
-    <div id="prompt"></div>
-    <ul id="choices" role="listbox" aria-label="Lựa chọn nghĩa"></ul>
-    <div id="feedback" aria-live="polite"></div>
-    <button id="next" disabled>Tiếp tục</button>
+  <div class="mcq-wrapper">
+
+    <!-- Header -->
+    <header class="mcq-header">
+      <a href="{% url 'homepage' %}" class="back-home">← Trang chủ</a>
+
+      <div class="mcq-progress">
+        <span id="count">0/0</span>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Game Card -->
+    <div id="game" class="mcq-card">
+      <div id="prompt" class="mcq-prompt"></div>
+
+      <ul id="choices" class="mcq-choices" role="listbox"></ul>
+
+      <div id="feedback" class="mcq-feedback"></div>
+
+      <button id="next" class="mcq-next" disabled>
+        Tiếp tục →
+      </button>
+    </div>
+
   </div>
 
 <script>
@@ -54,8 +75,12 @@ async function start() {
 async function loadNext() {
   if (count >= total) return finish();
 
-  const res = await fetch(`/minigames/sessions/${sessionId}/next`);
+  const res = await fetch(`/minigames/sessions/${sessionId}/next/`);
   if (!res.ok) return finish();
+
+  const feedback = document.getElementById('feedback');
+  feedback.className = 'mcq-feedback';
+  feedback.innerText = '';
 
   const q = await res.json();
   startTs = q.start_ts;
@@ -73,19 +98,23 @@ async function loadNext() {
     li.tabIndex = 0;
     li.innerText = c.text;
     li.onclick = () => submit(q.question_id, c.id, li);
-    li.onkeypress = e => { if (e.key === 'Enter') submit(q.question_id, c.id, li); };
+    li.onkeypress = e => {
+      if (e.key === 'Enter') submit(q.question_id, c.id, li);
+    };
     ul.appendChild(li);
   });
 
   document.getElementById('feedback').innerText = '';
   document.getElementById('next').disabled = true;
+  document.getElementById('progressFill').style.width =
+    (count / total * 100) + '%';
 }
 
 async function submit(questionId, choiceId, el) {
   if (answered) return;
   answered = true;
 
-  const res = await fetch(`/minigames/sessions/${sessionId}/answer`, {
+  const res = await fetch(`/minigames/sessions/${sessionId}/answer/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -99,30 +128,53 @@ async function submit(questionId, choiceId, el) {
   });
 
   const r = await res.json();
-  document.getElementById('feedback').innerText = r.correct ? 'Đúng!' : 'Sai rồi';
+  const feedback = document.getElementById('feedback');
+  feedback.className = 'mcq-feedback show ' + (r.correct ? 'correct' : 'wrong');
+  feedback.innerText = r.correct ? '✔ Chính xác!' : '✖ Sai rồi';
 
-  // disable all choices
   document.querySelectorAll('#choices li').forEach(li => {
-    li.style.pointerEvents = 'none';
-    li.style.opacity = '0.6';
+    li.classList.add('disabled');
   });
+
+  el.classList.add('selected');
 
   el.style.fontWeight = 'bold';
   document.getElementById('next').disabled = false;
 }
 
 async function finish() {
-  const res = await fetch(`/minigames/sessions/${sessionId}/finish`, {
+  const res = await fetch(`/minigames/sessions/${sessionId}/finish/`, {
     method: 'POST',
     headers: { 'X-CSRFToken': csrftoken }
   });
 
   const r = await res.json();
-  document.getElementById('prompt').innerText =
-    `Hoàn thành! Điểm: ${r.score}/${r.total_questions} (Độ chính xác: ${r.accuracy})`;
 
-  document.getElementById('choices').innerHTML = '';
-  document.getElementById('next').style.display = 'none';
+  document.getElementById('game').innerHTML = `
+    <div class="result-card">
+      <h2>🎉 Hoàn thành!</h2>
+
+      <div class="result-stats">
+        <div class="stat">
+          <span>Tổng câu</span>
+          <strong>${r.total_questions}</strong>
+        </div>
+        <div class="stat correct">
+          <span>Đúng</span>
+          <strong>${r.score}</strong>
+        </div>
+        <div class="stat accuracy">
+          <span>Độ chính xác</span>
+          <strong>${r.accuracy}</strong>
+        </div>
+      </div>
+
+      <div class="result-actions">
+        <button onclick="location.reload()">🔄 Chơi lại</button>
+        <a href="{% url 'homepage' %}" class="secondary">🏠 Trang chủ</a>
+      </div>
+    </div>
+  `;
 }
 
 document.getElementById('next').onclick = loadNext;
