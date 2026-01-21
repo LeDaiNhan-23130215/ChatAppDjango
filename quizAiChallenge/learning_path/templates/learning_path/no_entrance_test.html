@@ -1,22 +1,39 @@
 {% load static %}
-<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
+    <meta charset="UTF-8">
     <title>Entrance Test Required</title>
+    <link rel="stylesheet" href="{% static 'css/entrance_required.css' %}">
 </head>
 <body>
 
-<h2>⚠️ Bạn chưa làm bài kiểm tra đầu vào</h2>
+<div class="container">
 
-<p>
-    Để hệ thống tạo lộ trình học phù hợp,  
-    bạn cần hoàn thành bài <strong>Entrance Test</strong>.
-</p>
+    <div class="gate-card fade-in">
 
-<a href="{% url 'entrance_test:intro'%}">
-    <div class="button"><button>Làm Entrance Test</button></div>
-</a>
+        <div class="icon">🧭</div>
+
+        <h1>Bắt đầu hành trình học tập</h1>
+
+        <p class="description">
+            Để hệ thống xây dựng <strong>lộ trình học phù hợp nhất</strong> với bạn,  
+            bạn cần hoàn thành bài <strong>Entrance Test</strong> trước khi tiếp tục.
+        </p>
+
+        <ul class="benefits">
+            <li>🎯 Xác định đúng trình độ hiện tại</li>
+            <li>📘 Cá nhân hóa nội dung học</li>
+            <li>🚀 Tiết kiệm thời gian học tập</li>
+        </ul>
+
+        <a href="{% url 'entrance_test:intro' %}" class="cta-btn">
+            👉 Làm Entrance Test
+        </a>
+
+    </div>
+
+</div>
 
 </body>
 </html>

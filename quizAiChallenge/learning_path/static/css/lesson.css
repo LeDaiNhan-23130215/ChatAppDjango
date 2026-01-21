@@ -1,0 +1,139 @@
+/* ===== RESET ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ===== BASE ===== */
+body {
+    font-family: "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #f4f7fb, #e9eff5);
+    color: #2c3e50;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+    padding: 40px 20px;
+}
+
+/* ===== BACK LINK ===== */
+.back-link {
+    display: inline-block;
+    margin-bottom: 25px;
+    font-weight: bold;
+    color: #3498db;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+/* ===== CARD ===== */
+.lesson-card {
+    background: white;
+    padding: 45px 50px;
+    border-radius: 18px;
+    box-shadow: 0 14px 35px rgba(0,0,0,0.08);
+    animation: fadeInUp 0.6s ease;
+}
+
+/* ===== BADGE ===== */
+.badge {
+    display: inline-block;
+    padding: 6px 18px;
+    background: #e3f2fd;
+    color: #2980b9;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin-bottom: 18px;
+}
+
+/* ===== TITLE ===== */
+h1 {
+    font-size: 2.3rem;
+    margin-bottom: 10px;
+}
+
+/* ===== META ===== */
+.meta {
+    color: #7f8c8d;
+    margin-bottom: 30px;
+}
+
+/* ===== DIVIDER ===== */
+hr {
+    border: none;
+    height: 1px;
+    background: #ecf0f1;
+    margin: 35px 0;
+}
+
+/* ===== LESSON CONTENT ===== */
+.lesson-content {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #2f3640;
+}
+
+/* Nội dung markdown / HTML render */
+.lesson-content h2,
+.lesson-content h3 {
+    margin-top: 30px;
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+.lesson-content p {
+    margin-bottom: 18px;
+}
+
+.lesson-content ul,
+.lesson-content ol {
+    padding-left: 25px;
+    margin-bottom: 20px;
+}
+
+.lesson-content li {
+    margin-bottom: 8px;
+}
+
+.lesson-content blockquote {
+    background: #f8fbfe;
+    border-left: 5px solid #3498db;
+    padding: 18px 22px;
+    margin: 25px 0;
+    border-radius: 6px;
+    color: #34495e;
+}
+
+.lesson-content code {
+    background: #f1f2f6;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+.lesson-content pre {
+    background: #2c3e50;
+    color: #ecf0f1;
+    padding: 18px;
+    border-radius: 10px;
+    overflow-x: auto;
+    margin: 25px 0;
+}
+
+/* ===== ANIMATION ===== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

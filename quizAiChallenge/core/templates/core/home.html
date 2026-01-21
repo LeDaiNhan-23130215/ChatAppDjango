@@ -105,14 +105,20 @@
     <h2>Chơi Mini Games Thư Giãn</h2>
 
     <div class="mini-games-grid">
-        <div class="game-card">
-            <h3>Vocab Velocity</h3>
-            <p>Trắc nghiệm từ vựng tốc độ cao.</p>
-        </div>
-        <div class="game-card">
-            <h3>Logic Ladder</h3>
-            <p>Bài tập logic nhanh.</p>
-        </div>
+        <a href="{% url 'minigames:play_minigame' 'choose_meaning' %}">
+            <div class="game-card">
+                <h3>Vocab Velocity</h3>
+                <p>Trắc nghiệm từ vựng tốc độ cao.</p>
+            </div>
+        </a>
+
+        <a href="{% url 'minigames:play_minigame' 'flashcard' %}">
+            <div class="game-card">
+                <h3>Flashcard</h3>
+                <p>Bài tập học dạng thẻ</p>
+            </div>
+        </a>
+
     </div>
 </section>
 

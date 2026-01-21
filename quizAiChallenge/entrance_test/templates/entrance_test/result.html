@@ -1,58 +1,83 @@
 {% load static %}
-<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
+    <meta charset="UTF-8">
     <title>Kết quả Entrance Test</title>
-    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
-    <style>
-        table {
-            border-collapse: collapse;
-            width: 70%;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: center;
-        }
-        .weak {
-            background-color: #ffe0e0;
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
 
-    <h1>Kết quả Entrance Test TOEIC</h1>
+<div class="container exam-result-container">
 
-    <p>Điểm số: <strong>{{ score }}</strong></p>
-    <p>Trình độ: <strong>{{ level }}</strong></p>
+    <!-- HEADER -->
+    <div class="result-header fade-in">
+        <h1>📊 Kết quả Entrance Test TOEIC</h1>
+        <p>Đây là kết quả đánh giá trình độ hiện tại của bạn</p>
+    </div>
 
-    <p>Số câu đúng: {{ correct_answers }} / {{ total_questions }}</p>
+    <!-- SUMMARY -->
+    <div class="result-summary fade-in">
 
-    <hr>
+        <div class="summary-card">
+            <span class="label">🎯 Điểm số</span>
+            <h2>{{ score }}</h2>
+        </div>
 
-    <h2>📊 Thống kê theo từng Part</h2>
+        <div class="summary-card">
+            <span class="label">🏷 Trình độ</span>
+            <h2>{{ level }}</h2>
+        </div>
 
-    <table>
-        <tr>
-            <th>Part</th>
-            <th>Số câu đúng</th>
-            <th>Tổng câu</th>
-            <th>Độ chính xác (%)</th>
-            <th>Tỉ lệ sai (%)</th>
-        </tr>
+        <div class="summary-card">
+            <span class="label">✅ Số câu đúng</span>
+            <h2>{{ correct_answers }} / {{ total_questions }}</h2>
+        </div>
 
-        {% for p in part_summary %}
-        <tr class="{% if p.accuracy < 60 %}weak{% endif %}">
-            <td>{{ p.part_name }}</td>
-            <td>{{ p.correct }}</td>
-            <td>{{ p.total }}</td>
-            <td>{{ p.accuracy }}%</td>
-            <td>{{ p.wrong_rate }}%</td>
-        </tr>
-        {% endfor %}
-    </table>
-    <hr>
-    <a href="{% url 'homepage' %}"><button>Quay về trang chủ</button></a>
+    </div>
+
+    <!-- PART ANALYSIS -->
+    <div class="analysis-section fade-in">
+        <h2>📘 Phân tích theo từng Part</h2>
+
+        <table class="analysis-table">
+            <thead>
+                <tr>
+                    <th>Part</th>
+                    <th>Đúng</th>
+                    <th>Tổng</th>
+                    <th>Độ chính xác</th>
+                    <th>Tỉ lệ sai</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in part_summary %}
+                <tr class="{% if p.accuracy < 60 %}weak{% endif %}">
+                    <td>{{ p.part_name }}</td>
+                    <td>{{ p.correct }}</td>
+                    <td>{{ p.total }}</td>
+                    <td>{{ p.accuracy }}%</td>
+                    <td>{{ p.wrong_rate }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <p class="note">
+            🔴 Các part có độ chính xác dưới <strong>60%</strong> sẽ được ưu tiên trong lộ trình học.
+        </p>
+    </div>
+
+    <!-- ACTION -->
+    <div class="result-action fade-in">
+        <a href="{% url 'homepage' %}">
+            <button class="primary-btn">
+                🚀 Quay về trang chủ
+            </button>
+        </a>
+    </div>
+
+</div>
+
 </body>
 </html>

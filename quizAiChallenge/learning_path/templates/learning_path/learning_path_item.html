@@ -1,50 +1,77 @@
 {% load static %}
-<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
+    <meta charset="UTF-8">
     <title>{{ item.title }}</title>
+    <link rel="stylesheet" href="{% static 'css/learning_path_item.css' %}">
 </head>
 <body>
+
 <div class="container">
-        <div class="learning-card">
 
-            <h2>{{ item.title }}</h2>
-            <p>Skill: {{ item.skill_code }}</p>
-            <p>Type: {{ item.item_type }}</p>
+    <a href="{% url 'learning_path:learning_path' %}" class="back-link">
+        ← Quay lại lộ trình
+    </a>
 
-            <hr>
+    <div class="learning-card fade-in">
 
-            <div class="content-body">
+        <span class="badge {{ item.item_type|lower }}">
+            {{ item.item_type }}
+        </span>
 
-                {% if item.item_type == "LESSON" %}
-                <p>📖 Nội dung bài học (demo)</p>
-                {% elif item.item_type == "PRACTICE" %}
-                <p>📝 Bài luyện tập (demo)</p>
-                {% elif item.item_type == "QUIZ" %}
-                <p>❓ Quiz (demo)</p>
-                {% endif %}
+        <h1>{{ item.title }}</h1>
 
-            </div>
+        <p class="meta">
+            Skill: <strong>{{ item.skill_code }}</strong>
+        </p>
 
-            <hr>
+        <hr>
 
-            <div class="action-area">
+        <div class="content-body">
 
+            {% if item.item_type == "LESSON" %}
+                <h3>📖 Nội dung bài học</h3>
+                <p>
+                    Đây là nội dung bài học demo. Sau này bạn có thể render markdown,
+                    video, hoặc text tại đây.
+                </p>
 
-                {% if item.status == "UNLOCKED" %}
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="button">
-                       <button type="submit" class="btn-complete">✅ Hoàn thành</button>
-                    </div>
-                </form>
-                {% else %}
-                <p class="massge">🔒 Item chưa được mở khóa</p>
-                {% endif %}
-            </div>
+            {% elif item.item_type == "PRACTICE" %}
+                <h3>📝 Bài luyện tập</h3>
+                <p>
+                    Thực hành kỹ năng vừa học thông qua các bài tập tương tác.
+                </p>
+
+            {% elif item.item_type == "QUIZ" %}
+                <h3>❓ Quiz kiểm tra</h3>
+                <p>
+                    Trả lời các câu hỏi để đánh giá mức độ hiểu bài của bạn.
+                </p>
+            {% endif %}
 
         </div>
+
+        <hr>
+
+        <div class="action-area">
+
+            {% if item.status == "UNLOCKED" %}
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-complete">
+                        ✅ Hoàn thành
+                    </button>
+                </form>
+            {% else %}
+                <p class="locked-msg">🔒 Item chưa được mở khóa</p>
+            {% endif %}
+
+        </div>
+
     </div>
+
+</div>
+
 </body>
 </html>

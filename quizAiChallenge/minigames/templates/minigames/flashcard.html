@@ -1,49 +1,51 @@
 {% block content %}
 {% csrf_token %}
-<head>
-  <meta charset="UTF-8">
-  <title>Flashcard</title>
-  {% load static %}
-  <link rel="stylesheet" href="{% static 'minigames/style.css' %}">
-</head>
+{% load static %}
+<link rel="stylesheet" href="{% static 'minigames/style.css' %}">
 
-<h2>Flashcard</h2>
-<p style="text-align:center; color:#6b7280;">
-  Bạn có nhớ nghĩa của từ này không?
-</p>
+<div class="flashcard-page">
 
-<div class="flashcard-container">
-  <div class="card" id="flashcard">
-    <div class="progress-wrapper">
-      <div class="progress-text">
-        <span id="currentIndex">0</span> / <span id="totalCount">0</span>
-      </div>
-      <div class="progress-bar">
-        <div class="progress-fill" id="progressFill"></div>
-      </div>
+  <!-- HEADER -->
+  <div class="flashcard-header">
+    <h1>Flashcard</h1>
+    <p>Bạn có nhớ nghĩa của từ này không?</p>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrapper">
+    <div class="progress-text">
+      <span id="currentIndex">0</span> / <span id="totalCount">0</span>
     </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
 
-    <div class="card-inner">
-      <div class="card-front">
-        <h3 id="term">Loading...</h3>
-      </div>
-      <div class="card-back">
-        <p><strong id="definition"></strong></p>
-        <small id="example"></small>
+  <!-- CARD -->
+  <div class="flashcard-container">
+    <div class="card" id="flashcard">
+      <div class="card-inner">
+        <div class="card-front">
+          <h3 id="term">Loading...</h3>
+        </div>
+        <div class="card-back">
+          <p id="definition"></p>
+          <small id="example"></small>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- FEEDBACK -->
   <div id="flashcardFeedback" class="flashcard-feedback"></div>
+  <div id="readingHint" class="reading-hint hidden">👀 Đang đọc...</div>
 
-  <div id="readingHint" class="reading-hint hidden">
-    👀 Đang đọc...
-  </div>
-
+  <!-- ACTIONS -->
   <div class="flashcard-actions">
-    <button id="rememberBtn">Nhớ</button>
-    <button id="forgetBtn">Không nhớ</button>
+    <button id="forgetBtn" class="secondary">Không nhớ</button>
+    <button id="rememberBtn" class="primary">Nhớ</button>
   </div>
+
 </div>
 
 <script>
@@ -150,6 +152,13 @@ function renderCard(data) {
   document.getElementById("flashcard").classList.remove("flipped");
   flipped = false;
 
+  const hint = document.getElementById("readingHint");
+  hint.classList.add("hidden");
+
+  const fb = document.getElementById("flashcardFeedback");
+  fb.className = "flashcard-feedback";
+  fb.innerText = "";
+
   canProceed = true;
   setButtonsDisabled(false);
 }
@@ -171,8 +180,9 @@ function setButtonsDisabled(disabled) {
 }
 
 function showReadingHint(show) {
-  document.getElementById("readingHint")
-    .classList.toggle("hidden", !show);
+  const hint = document.getElementById("readingHint");
+  hint.innerText = show ? "👀 Đang đọc định nghĩa..." : "";
+  hint.classList.toggle("hidden", !show);
 }
 
 document.getElementById("rememberBtn").onclick = async () => {
@@ -185,9 +195,6 @@ document.getElementById("rememberBtn").onclick = async () => {
 
   await submitFlashcard(true);
   await loadNextCard();
-
-  document.getElementById("flashcardFeedback").className = "flashcard-feedback";
-  canProceed = true;
 };
 
 document.getElementById("forgetBtn").onclick = async () => {
@@ -202,6 +209,7 @@ document.getElementById("forgetBtn").onclick = async () => {
   }
 
   showFlashcardFeedback("forget");
+
   showReadingHint(true);
 
   setTimeout(async () => {
@@ -209,17 +217,16 @@ document.getElementById("forgetBtn").onclick = async () => {
 
     await submitFlashcard(false);
     await loadNextCard();
-
-    document.getElementById("flashcardFeedback").className = "flashcard-feedback";
-    canProceed = true;
   }, READ_DELAY);
 };
 
 (async function init() {
+  document.getElementById("readingHint").classList.add("hidden");
+
   await createSession();
-  await loadNextCard();
   currentIndex = 0;
   updateProgress();
+  await loadNextCard();
 })();
 </script>
 

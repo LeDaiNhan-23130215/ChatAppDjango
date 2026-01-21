@@ -1,35 +1,48 @@
 {% load static %}
-<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <title>My Learning Path</title>
+    <meta charset="UTF-8">
+    <title>Lộ trình học</title>
+    <link rel="stylesheet" href="{% static 'css/learning_path.css' %}">
 </head>
 <body>
 
+<div class="container">
     <h1>📘 Lộ trình học của bạn</h1>
+    <p class="subtitle">Theo dõi tiến trình và tiếp tục hành trình học tập 🚀</p>
 
     {% if items %}
-        {% for item in items %}
-            <div class="item {{ item.status|lower }}">
-                <strong>{{ item.order }}. {{ item.title }}</strong><br>
-                Skill: {{ item.skill_code }} | Type: {{ item.item_type }} <br>
+        <div class="path-list">
+            {% for item in items %}
+                <div class="path-item {{ item.status|lower }}">
+                    <div class="path-header">
+                        <span class="order">{{ item.order }}</span>
+                        <h3>{{ item.title }}</h3>
+                    </div>
 
-                {% if item.status == "COMPLETED" %}
-                    ✅ Đã hoàn thành
-                {% elif item.status == "UNLOCKED" %}
-                    ▶ <a href="{% url 'learning_path:learning_path_item' item.id %}">
-                       <div class="button"><button>Bắt đầu</button></div>
-                    </a>
-                {% else %}
-                    🔒 Chưa mở khóa
-                {% endif %}
-            </div>
-        {% endfor %}
+                    <p class="meta">
+                        Skill: <strong>{{ item.skill_code }}</strong> • {{ item.item_type }}
+                    </p>
+
+                    {% if item.status == "COMPLETED" %}
+                        <div class="status completed">✅ Đã hoàn thành</div>
+                    {% elif item.status == "UNLOCKED" %}
+                        <a href="{% url 'learning_path:learning_path_item' item.id %}" class="btn start-btn">
+                            ▶ Bắt đầu học
+                        </a>
+                    {% else %}
+                        <div class="status locked">🔒 Chưa mở khóa</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
     {% else %}
-        <p class="message">⚠️ Bạn chưa có lộ trình học.</p>
+        <p class="empty">⚠️ Bạn chưa có lộ trình học.</p>
     {% endif %}
 
-   <div class="button"><a href="{% url 'homepage' %}"><button>Quay về trang chủ</button></a></div>
+    <a href="{% url 'homepage' %}" class="btn back-btn">⬅ Quay về trang chủ</a>
+</div>
+
 </body>
 </html>

@@ -1,0 +1,96 @@
+/* ===== RESET ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ===== BASE ===== */
+body {
+    font-family: "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #f4f7fb, #e9eff5);
+    color: #2c3e50;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ===== CONTAINER ===== */
+.container {
+    width: 100%;
+    padding: 20px;
+}
+
+/* ===== CARD ===== */
+.intro-card {
+    max-width: 520px;
+    margin: auto;
+    background: white;
+    padding: 45px 40px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.08);
+    animation: fadeInUp 0.6s ease;
+}
+
+/* ===== ICON ===== */
+.icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+/* ===== TEXT ===== */
+h1 {
+    font-size: 2.1rem;
+    margin-bottom: 15px;
+}
+
+.description {
+    color: #555;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+/* ===== INFO LIST ===== */
+.info-list {
+    list-style: none;
+    margin-bottom: 35px;
+    text-align: left;
+}
+
+.info-list li {
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+}
+
+/* ===== BUTTON ===== */
+.start-btn {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    border: none;
+    padding: 14px 55px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.start-btn:hover {
+    transform: scale(1.07);
+    box-shadow: 0 10px 25px rgba(52, 152, 219, 0.4);
+}
+
+/* ===== ANIMATION ===== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
