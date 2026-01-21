@@ -1,34 +1,71 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
+    <meta charset="UTF-8">
     <title>{{ mock.title }}</title>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/mock_exam.css' %}">
 </head>
 <body>
-<div class="container">
-      <h2>{{ mock.title }}</h2>
-    <p>Skill: {{ mock.skill_code }}</p>
-    <p>Level: {{ mock.level }}</p>
 
-    <hr>
-    <form method="post" action="{% url 'learning_path:quiz_submit' mock.id %}">
-        {% csrf_token %}
+<div class="container">
+
+    <a href="javascript:history.back()" class="back-link">
+        ← Quay lại
+    </a>
+
+    <div class="exam-card fade-in">
+
+        <span class="badge">MOCK EXAM</span>
+
+        <h1>{{ mock.title }}</h1>
+
+        <p class="meta">
+            Skill: <strong>{{ mock.skill_code }}</strong> • Level: {{ mock.level }}
+        </p>
+
+        <hr>
+
+        <form method="post" action="{% url 'learning_path:quiz_submit' mock.id %}">
+            {% csrf_token %}
+
             {% for question in mock.questions_for_quiz.all %}
                 <div class="question-box">
-                    <p><strong>Câu {{ forloop.counter }}:</strong> {{ question.content }}</p>
-                    {% for choice in question.choices.all %}
-                        <label>
-                            <input type="radio" name="q{{ question.id }}" value="{{ choice.id }}" required>
-                            {{ choice.content }}
-                        </label><br>
-                    {% endfor %}
+                    <h3>
+                        Câu {{ forloop.counter }}
+                    </h3>
+
+                    <p class="question-content">
+                        {{ question.content }}
+                    </p>
+
+                    <div class="choices">
+                        {% for choice in question.choices.all %}
+                            <label class="choice">
+                                <input
+                                    type="radio"
+                                    name="q{{ question.id }}"
+                                    value="{{ choice.id }}"
+                                    required
+                                >
+                                <span class="choice-text">{{ choice.content }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
                 </div>
             {% endfor %}
-       <div class="button">
-           <div class="button"><button type="submit">Nộp Mock Exam</button></div>
-        </div>
-    </form>
+
+            <div class="submit-area">
+                <button type="submit" class="submit-btn">
+                    📝 Nộp Mock Exam
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
 </div>
+
 </body>
 </html>

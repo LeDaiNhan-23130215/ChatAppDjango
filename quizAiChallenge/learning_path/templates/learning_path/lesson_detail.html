@@ -1,23 +1,38 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
+    <meta charset="UTF-8">
     <title>{{ lesson.title }}</title>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/lesson.css' %}">
 </head>
 <body>
-<div class="container">
-      <h2>{{ lesson.title }}</h2>
-    <p>Skill: {{ lesson.skill_code }}</p>
-    <p>Level: {{ lesson.level }}</p>
 
-    <hr>
-    <div class="lesson-content">
-        📖 Nội dung bài học:
-        <div>{{ lesson.content|safe }}</div>
+<div class="container">
+
+    <a href="learning_path:learning_path" class="back-link">
+        ← Quay lại
+    </a>
+
+    <div class="lesson-card fade-in">
+
+        <span class="badge">LESSON</span>
+
+        <h1>{{ lesson.title }}</h1>
+
+        <p class="meta">
+            Skill: <strong>{{ lesson.skill_code }}</strong> • Level: {{ lesson.level }}
+        </p>
+
+        <hr>
+
+        <div class="lesson-content">
+            {{ lesson.content|safe }}
+        </div>
+
     </div>
 
 </div>
+
 </body>
 </html>
-
