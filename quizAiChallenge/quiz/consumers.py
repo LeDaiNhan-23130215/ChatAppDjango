@@ -7,6 +7,7 @@ from .models import Room, Question
 from accounts.models import User
 import redis.asyncio as redis
 from redis.asyncio.lock import Lock as RedisLock
+from leaderboard.services import update_elo
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +108,71 @@ class QuizConsumer(AsyncWebsocketConsumer):
         qs = Question.objects.all()[:num_questions]
         total = qs.aggregate(total=Sum('score'))['total'] or 0
         return total
+    
+    def calculate_elo_delta(self, player1_elo, player2_elo, player1_score, player2_score):
+        """
+        Tính toán ELO delta - chỉ cộng cho người thắng, không trừ cho người thua
+        K = 32 (hệ số điều chỉnh), minimum +10 ELO nếu thắng
+        """
+        K = 32
+        MIN_GAIN = 10
+        
+        # Xác định kết quả thực tế
+        if player1_score > player2_score:
+            # Player 1 thắng - cộng ELO
+            rating_diff = player2_elo - player1_elo
+            expected_score1 = 1 / (1 + 10 ** (rating_diff / 400))
+            delta1 = max(MIN_GAIN, int(K * (1 - expected_score1)))
+            delta2 = 0  # Người thua không mất ELO
+        elif player1_score < player2_score:
+            # Player 2 thắng - cộng ELO
+            rating_diff = player1_elo - player2_elo
+            expected_score2 = 1 / (1 + 10 ** (rating_diff / 400))
+            delta2 = max(MIN_GAIN, int(K * (1 - expected_score2)))
+            delta1 = 0  # Người thua không mất ELO
+        else:
+            # Hòa - không ai thay đổi
+            delta1 = 0
+            delta2 = 0
+        
+        return int(delta1), int(delta2)
+    
+    @database_sync_to_async
+    def update_players_elo(self, player1_id, player2_id, player1_score, player2_score):
+        """
+        Cập nhật ELO cho cả 2 người chơi dựa vào kết quả match
+        """
+        try:
+            player1 = User.objects.get(id=player1_id)
+            player2 = User.objects.get(id=player2_id)
+            
+            # Lấy ELO hiện tại
+            player1_elo = player1.elo_profile.elo
+            player2_elo = player2.elo_profile.elo
+            
+            # Tính ELO delta
+            delta1, delta2 = self.calculate_elo_delta(
+                player1_elo, player2_elo, 
+                player1_score, player2_score
+            )
+            
+            # Cập nhật ELO
+            if delta1 != 0:
+                update_elo(player1, delta1)
+            if delta2 != 0:
+                update_elo(player2, delta2)
+            
+            logger.info(
+                f"ELO Updated - Player1({player1.username}): "
+                f"{player1_elo} → {player1_elo + delta1} ({delta1:+d}), "
+                f"Player2({player2.username}): "
+                f"{player2_elo} → {player2_elo + delta2} ({delta2:+d})"
+            )
+            
+            return True
+        except Exception as e:
+            logger.error(f"Error updating ELO: {e}", exc_info=True)
+            return False
 
     async def connect(self):
         # Kiểm tra authentication
@@ -343,6 +409,28 @@ class QuizConsumer(AsyncWebsocketConsumer):
                 return
                 
             if state['question_num'] > 10:
+                # Cập nhật ELO cho cả 2 người chơi trước khi kết thúc
+                user_ids = list(state['user_snapshot'].keys())
+                scores = state['scores']
+                
+                logger.info(f"Quiz ended for room {self.code}. User IDs: {user_ids}, Scores: {scores}")
+                
+                if len(user_ids) == 2:
+                    player1_id = int(user_ids[0])
+                    player2_id = int(user_ids[1])
+                    player1_score = int(scores.get(user_ids[0], 0))
+                    player2_score = int(scores.get(user_ids[1], 0))
+                    
+                    logger.info(f"Updating ELO - Player1({player1_id}): {player1_score} pts vs Player2({player2_id}): {player2_score} pts")
+                    
+                    result = await self.update_players_elo(
+                        player1_id, player2_id, 
+                        player1_score, player2_score
+                    )
+                    logger.info(f"ELO update result: {result}")
+                else:
+                    logger.warning(f"Not enough players for ELO update: {len(user_ids)} players")
+                
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {'type': 'finished', 'scores': state['scores']}
@@ -353,6 +441,28 @@ class QuizConsumer(AsyncWebsocketConsumer):
 
             q = await self.get_random_unused_question(state['used_questions'])
             if not q:
+                # Cập nhật ELO cho cả 2 người chơi trước khi kết thúc
+                user_ids = list(state['user_snapshot'].keys())
+                scores = state['scores']
+                
+                logger.info(f"No more questions for room {self.code}. User IDs: {user_ids}, Scores: {scores}")
+                
+                if len(user_ids) == 2:
+                    player1_id = int(user_ids[0])
+                    player2_id = int(user_ids[1])
+                    player1_score = int(scores.get(user_ids[0], 0))
+                    player2_score = int(scores.get(user_ids[1], 0))
+                    
+                    logger.info(f"Updating ELO (no more questions) - Player1({player1_id}): {player1_score} pts vs Player2({player2_id}): {player2_score} pts")
+                    
+                    result = await self.update_players_elo(
+                        player1_id, player2_id, 
+                        player1_score, player2_score
+                    )
+                    logger.info(f"ELO update result: {result}")
+                else:
+                    logger.warning(f"Not enough players for ELO update: {len(user_ids)} players")
+                
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {'type': 'finished', 'scores': state['scores']}

@@ -54,6 +54,8 @@ urlpatterns = [
     #App Leaderboard
     path("leaderboard/", include("leaderboard.urls")),
 
+    #App Question Generator
+    path('api/ai/', include('question_generator.urls')),
     #App User Profile
     path('user_profile/', include("user_profile.urls")),
     
