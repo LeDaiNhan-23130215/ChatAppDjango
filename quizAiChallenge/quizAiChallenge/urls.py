@@ -47,6 +47,9 @@ urlpatterns = [
 
     #App Leaderboard
     path("leaderboard/", include("leaderboard.urls")),
+
+    #App Question Generator
+    path('api/ai/', include('question_generator.urls')),
 ]
 
 urlpatterns += static(
