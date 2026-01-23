@@ -111,25 +111,20 @@ class QuizConsumer(AsyncWebsocketConsumer):
     
     def calculate_elo_delta(self, player1_elo, player2_elo, player1_score, player2_score):
         """
-        Tính toán ELO delta - chỉ cộng cho người thắng, không trừ cho người thua
-        K = 32 (hệ số điều chỉnh), minimum +10 ELO nếu thắng
+        Tính toán ELO delta - simple system:
+        Win: +30 ELO
+        Loss: -20 ELO (only for player-vs-player, not for quiz mode)
+        Draw: 0 ELO
         """
-        K = 32
-        MIN_GAIN = 10
-        
-        # Xác định kết quả thực tế
+        # Xác định kết quả
         if player1_score > player2_score:
-            # Player 1 thắng - cộng ELO
-            rating_diff = player2_elo - player1_elo
-            expected_score1 = 1 / (1 + 10 ** (rating_diff / 400))
-            delta1 = max(MIN_GAIN, int(K * (1 - expected_score1)))
-            delta2 = 0  # Người thua không mất ELO
+            # Player 1 thắng - cộng +30 ELO
+            delta1 = 30
+            delta2 = -20  # Player 2 thua - trừ -20 ELO
         elif player1_score < player2_score:
-            # Player 2 thắng - cộng ELO
-            rating_diff = player1_elo - player2_elo
-            expected_score2 = 1 / (1 + 10 ** (rating_diff / 400))
-            delta2 = max(MIN_GAIN, int(K * (1 - expected_score2)))
-            delta1 = 0  # Người thua không mất ELO
+            # Player 2 thắng - cộng +30 ELO
+            delta1 = -20  # Player 1 thua - trừ -20 ELO
+            delta2 = 30
         else:
             # Hòa - không ai thay đổi
             delta1 = 0
@@ -141,32 +136,72 @@ class QuizConsumer(AsyncWebsocketConsumer):
     def update_players_elo(self, player1_id, player2_id, player1_score, player2_score):
         """
         Cập nhật ELO cho cả 2 người chơi dựa vào kết quả match
+        Also updates User.elo_rating and creates GameHistory record
         """
         try:
+            from quiz.models import GameHistory
+            
             player1 = User.objects.get(id=player1_id)
             player2 = User.objects.get(id=player2_id)
             
-            # Lấy ELO hiện tại
-            player1_elo = player1.elo_profile.elo
-            player2_elo = player2.elo_profile.elo
+            # Lấy ELO hiện tại từ User model (primary source)
+            player1_elo_before = player1.elo_rating
+            player2_elo_before = player2.elo_rating
             
             # Tính ELO delta
             delta1, delta2 = self.calculate_elo_delta(
-                player1_elo, player2_elo, 
+                player1_elo_before, player2_elo_before, 
                 player1_score, player2_score
             )
             
-            # Cập nhật ELO
+            # Cập nhật ELO cho cả 2 người chơi
             if delta1 != 0:
                 update_elo(player1, delta1)
+                player1.elo_rating += delta1
+                player1.save(update_fields=['elo_rating'])
+            
             if delta2 != 0:
                 update_elo(player2, delta2)
+                player2.elo_rating += delta2
+                player2.save(update_fields=['elo_rating'])
+            
+            # Tạo GameHistory record (nếu tồn tại)
+            try:
+                from quiz.models import Room
+                room = Room.objects.filter(code=self.code).first()
+                if room:
+                    # Xác định người thắng
+                    winner = None
+                    if player1_score > player2_score:
+                        winner = player1
+                    elif player2_score > player1_score:
+                        winner = player2
+                    
+                    game_history = GameHistory.objects.create(
+                        room=room,
+                        player1=player1,
+                        player2=player2,
+                        player1_score=player1_score,
+                        player2_score=player2_score,
+                        winner=winner,
+                        # ELO tracking
+                        player1_elo_before=player1_elo_before,
+                        player1_elo_after=player1.elo_rating,
+                        player1_elo_change=delta1,
+                        player2_elo_before=player2_elo_before,
+                        player2_elo_after=player2.elo_rating,
+                        player2_elo_change=delta2,
+                        elo_updated=True
+                    )
+                    logger.info(f"GameHistory created: {game_history.id}")
+            except Exception as e:
+                logger.warning(f"Could not create GameHistory: {e}")
             
             logger.info(
                 f"ELO Updated - Player1({player1.username}): "
-                f"{player1_elo} → {player1_elo + delta1} ({delta1:+d}), "
+                f"{player1_elo_before} → {player1.elo_rating} ({delta1:+d}), "
                 f"Player2({player2.username}): "
-                f"{player2_elo} → {player2_elo + delta2} ({delta2:+d})"
+                f"{player2_elo_before} → {player2.elo_rating} ({delta2:+d})"
             )
             
             return True

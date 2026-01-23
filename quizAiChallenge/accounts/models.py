@@ -77,6 +77,9 @@ class User(AbstractUser):
     referred_frequency = models.CharField(max_length=50, choices=FREQUENCY_CHOICES, null=True, blank=True)
     motivation_level = models.PositiveSmallIntegerField(null=True, blank=True)
     hobby = models.CharField(max_length=50, choices=HOBBY_CHOICES, null=True, blank=True)
+    
+    # ✨ NEW: ELO Rating
+    elo_rating = models.IntegerField(default=1000, help_text="Player ELO rating for quiz battles")
 
     def is_profile_completed(self):
         required_fields = [
