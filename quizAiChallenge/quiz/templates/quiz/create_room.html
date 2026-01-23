@@ -3,17 +3,31 @@
 {% block title %}Tạo Phòng Quiz{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>Tạo Phòng Quiz Mới</h1>
-    
-    <form method="POST">
-        {% csrf_token %}
-        <div class="form-group">
-            <p>Nhấn nút dưới để tạo một phòng quiz mới với mã ngẫu nhiên:</p>
-            <button type="submit" class="btn btn-primary">Tạo Phòng</button>
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="card shadow-sm p-4" style="max-width: 500px; width: 100%;">
+        
+        <div class="text-center mb-4">
+            <h2 class="fw-bold">🎯 Tạo Phòng Quiz</h2>
+            <p class="text-muted mb-0">
+                Một phòng quiz mới sẽ được tạo với mã tham gia ngẫu nhiên
+            </p>
         </div>
-    </form>
-    
-    <p><a href="{% url 'quiz:lobby' %}">Quay lại Lobby</a></p>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    🚀 Tạo Phòng Ngay
+                </button>
+            </div>
+        </form>
+
+        <div class="text-center mt-4">
+            <a href="{% url 'quiz:lobby' %}" class="text-decoration-none">
+                ← Quay lại Lobby
+            </a>
+        </div>
+
+    </div>
 </div>
 {% endblock %}
