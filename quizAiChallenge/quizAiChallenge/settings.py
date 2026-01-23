@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'leaderboard',
     'minigames',
     'user_profile',
-    
+    'question_generator',
     
     'django.contrib.admin',
     'django.contrib.auth',
@@ -61,7 +61,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -152,5 +152,11 @@ LOGOUT_REDIRECT_URL = 'login'
 
 AUTH_USER_MODEL = 'accounts.User'
 
+# AI URL
+# URL public của AI worker (ngrok)
+AI_WORKER_URL = "https://nonelliptic-dewily-carlos.ngrok-free.dev"
+
+# Token để xác thực worker (phải giống bên Colab)
+AI_WORKER_TOKEN = "38bnDJIXRQfPlA0mgCWUksNRPRV_49ott2Dud69FqNoVeq21"
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

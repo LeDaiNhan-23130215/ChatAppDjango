@@ -3,61 +3,41 @@ from quiz.models import Question
 
 logger = logging.getLogger(__name__)
 
-def save_questions_to_db(questions: list):
-    """
-    Nhận list câu hỏi JSON từ AI worker và lưu vào database
-    
-    Args:
-        questions: List of question dictionaries from AI worker
-    
-    Returns:
-        Number of questions saved
-        
-    Raises:
-        KeyError: If required fields are missing
-        Exception: If database operation fails
-    """
-    if not questions:
-        logger.warning("save_questions_to_db called with empty questions list")
-        return 0
-    
-    objs = []
-    
+def save_questions_to_db(questions, user_id=None):
+    print("DEBUG: Bắt đầu save_questions_to_db")
+    print(f"DEBUG: Số lượng questions nhận được: {len(questions)}")
+    print("DEBUG: Questions data mẫu:", questions[0] if questions else "Empty list")
+
     try:
-        for idx, q in enumerate(questions):
-            try:
-                # Validate required fields
-                if "sentence" not in q:
-                    raise KeyError(f"Question {idx}: 'sentence' field is required")
-                if "options" not in q or not all(k in q["options"] for k in ["A", "B", "C", "D"]):
-                    raise KeyError(f"Question {idx}: 'options' must contain A, B, C, D")
-                if "correct_answer" not in q:
-                    raise KeyError(f"Question {idx}: 'correct_answer' field is required")
-                
-                obj = Question(
-                    text=q["sentence"],
-                    directive=q.get("directive", ""),
-                    a=q["options"]["A"],
-                    b=q["options"]["B"],
-                    c=q["options"]["C"],
-                    d=q["options"]["D"],
-                    correct=q["correct_answer"],
-                    explanation=q.get("explanation"),
-                    question_type=q.get("type"),
-                    difficulty=q.get("difficulty"),
-                    score=q.get("score", 0),
-                    context=q.get("context"),
-                )
-                objs.append(obj)
-            except KeyError as e:
-                logger.error(f"Error processing question {idx}: {str(e)}")
-                raise
-        
-        # Bulk create all objects
-        created = Question.objects.bulk_create(objs)
-        logger.info(f"Successfully created {len(created)} questions")
-        return len(created)
-        
+        from quiz.models import Question  # import ở đây để tránh circular import nếu có
+        created_count = 0
+
+        for q_data in questions:
+            print("DEBUG: Đang lưu câu hỏi:", q_data.get('sentence', 'N/A'))
+            print("DEBUG: Options:", q_data.get('options', {}))
+            print("DEBUG: Correct:", q_data.get('correct_answer'))
+
+            # Mapping field (điều chỉnh theo model thực tế của bạn)
+            Question.objects.create(
+                text=q_data.get('sentence') or q_data.get('directive', ''),
+                a=q_data['options'].get('A', ''),
+                b=q_data['options'].get('B', ''),
+                c=q_data['options'].get('C', ''),
+                d=q_data['options'].get('D', ''),
+                correct=q_data.get('correct_answer', ''),
+                explanation=q_data.get('explanation', ''),
+                question_type=q_data.get('type', ''),
+                difficulty=q_data.get('difficulty', ''),
+                score=q_data.get('score'),
+                context=q_data.get('context', ''),
+                category=q_data.get('category', ''),  # nếu có
+            )
+            created_count += 1
+
+        print(f"DEBUG: Đã tạo thành công {created_count} câu hỏi")
+        return created_count
+
     except Exception as e:
-        logger.error(f"Error in save_questions_to_db: {str(e)}")
-        raise
+        print("DEBUG: LỖI khi lưu DB:", str(e))
+        print("DEBUG: Traceback:", e.__traceback__)
+        raise  # raise lại để view catch và log

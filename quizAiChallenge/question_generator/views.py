@@ -10,22 +10,16 @@ logger = logging.getLogger(__name__)
 
 @csrf_exempt
 def request_ai_questions(request):
-    """
-    Django → AI worker
-    """
     if request.method != "POST":
         return JsonResponse({"error": "POST only"}, status=405)
 
     try:
         body = json.loads(request.body)
     except json.JSONDecodeError:
-        logger.error("Invalid JSON in request body")
         return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-    # Validate required fields
     user_id = body.get("user_id")
     if not user_id:
-        logger.error("Missing user_id")
         return JsonResponse({"error": "user_id is required"}, status=400)
 
     payload = {
@@ -39,58 +33,81 @@ def request_ai_questions(request):
 
     headers = {
         "Content-Type": "application/json",
-        "X-AI-Worker-Token": settings.AI_WORKER_TOKEN
+        "X-AI-Worker-Token": settings.AI_WORKER_TOKEN  # nếu worker yêu cầu
     }
 
     try:
-        logger.info(f"Requesting questions from AI worker for user {user_id}")
         res = requests.post(
             f"{settings.AI_WORKER_URL}/generate",
             json=payload,
             headers=headers,
-            timeout=10
+            timeout=180
         )
-        return JsonResponse(res.json(), status=res.status_code)
+
+        if res.status_code == 202:
+            data = res.json()
+            task_id = data.get("task_id")
+            # TODO: Lưu task vào DB nếu bạn có model QuizTask
+            # QuizTask.objects.create(task_id=task_id, user_id=user_id, status="queued")
+            return JsonResponse({
+                "status": "queued",
+                "task_id": task_id,
+                "message": "Quiz generation started. Check status later."
+            }, status=202)
+
+        else:
+            return JsonResponse(res.json() or {"error": "Worker error"}, status=res.status_code)
+
+    except requests.exceptions.Timeout:
+        return JsonResponse({"error": "AI worker timeout – generation may still be processing"}, status=504)
     except Exception as e:
         logger.error(f"AI worker request failed: {str(e)}")
         return JsonResponse({"error": "AI worker unavailable"}, status=503)
 
 
-@csrf_exempt
+@csrf_exempt  # đã có, nhưng cần chắc chắn áp dụng đúng
 def receive_ai_questions(request):
-    """
-    AI worker → Django
-    """
     if request.method != "POST":
         return JsonResponse({"error": "POST only"}, status=405)
 
-    # Security check
+    # Bỏ hoàn toàn check CSRF token (vì đây là API từ worker, không phải browser)
+    # Chỉ giữ lại check secret token để bảo mật
     token = request.headers.get("X-AI-Worker-Token")
     if token != settings.AI_WORKER_TOKEN:
-        logger.warning("Unauthorized request to receive_ai_questions")
         return JsonResponse({"error": "Unauthorized"}, status=401)
 
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
-        logger.error("Invalid JSON in receive_ai_questions")
         return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-    questions = data.get("questions", [])
+    worker_task_id = data.get("worker_task_id")
     user_id = data.get("user_id")
+    questions = data.get("questions", [])
+    meta = data.get("meta", {})
 
     if not questions:
-        logger.warning("No questions received")
         return JsonResponse({"error": "questions list is empty"}, status=400)
 
     try:
-        logger.info(f"Saving {len(questions)} questions for user {user_id}")
-        save_questions_to_db(questions)
-        logger.info(f"Successfully saved {len(questions)} questions")
+        # Lưu questions
+        save_questions_to_db(questions, user_id=user_id)  # truyền user_id nếu hàm cần
+
+        # TODO: Update task status trong DB
+        # task = QuizTask.objects.filter(task_id=worker_task_id).first()
+        # if task:
+        #     task.status = "completed"
+        #     task.completed_at = timezone.now()
+        #     task.meta = meta
+        #     task.save()
+
+        logger.info(f"Saved {len(questions)} questions for user {user_id} | task {worker_task_id}")
         return JsonResponse({
             "status": "ok",
-            "saved": len(questions)
+            "saved": len(questions),
+            "task_id": worker_task_id
         }, status=201)
+
     except Exception as e:
-        logger.error(f"Error saving questions: {str(e)}")
+        logger.error(f"Error saving questions (task {worker_task_id}): {str(e)}")
         return JsonResponse({"error": "Failed to save questions"}, status=500)
