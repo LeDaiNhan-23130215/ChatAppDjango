@@ -59,9 +59,24 @@ class Match(models.Model):
     ai_score = models.IntegerField(default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # ✨ NEW: ELO tracking
+    elo_change = models.IntegerField(default=0, help_text="ELO points gained/lost in this match")
+    elo_before = models.IntegerField(null=True, blank=True, help_text="User ELO before match")
+    elo_after = models.IntegerField(null=True, blank=True, help_text="User ELO after match")
 
     def __str__(self):
         return f"Match #{self.id} - {self.user.username} ({self.ai_mode}, {self.ai_difficulty})"
+    
+    @property
+    def result(self):
+        """Return match result: 'win', 'loss', or 'draw'"""
+        if self.user_score > self.ai_score:
+            return 'win'
+        elif self.user_score < self.ai_score:
+            return 'loss'
+        else:
+            return 'draw'
 
 class Round(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE)

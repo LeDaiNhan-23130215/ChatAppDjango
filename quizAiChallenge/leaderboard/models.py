@@ -8,7 +8,7 @@ class UserElo(models.Model):
          on_delete=models.CASCADE,
          related_name='elo_profile'
     )
-    elo = models.IntegerField(default=0)
+    elo = models.IntegerField(default=1000)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):

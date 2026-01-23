@@ -197,6 +197,19 @@ class GameHistory(models.Model):
         null=True,
         blank=True
     )
+    # ELO tracking for player1
+    player1_elo_before = models.IntegerField(null=True, blank=True, help_text="Player1 ELO before match")
+    player1_elo_after = models.IntegerField(null=True, blank=True, help_text="Player1 ELO after match")
+    player1_elo_change = models.IntegerField(default=0, help_text="Player1 ELO change")
+    
+    # ELO tracking for player2
+    player2_elo_before = models.IntegerField(null=True, blank=True, help_text="Player2 ELO before match")
+    player2_elo_after = models.IntegerField(null=True, blank=True, help_text="Player2 ELO after match")
+    player2_elo_change = models.IntegerField(default=0, help_text="Player2 ELO change")
+    
+    # Elo updated flag
+    elo_updated = models.BooleanField(default=False, help_text="Whether ELO has been calculated and applied")
+    
     played_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -205,3 +218,23 @@ class GameHistory(models.Model):
 
     def __str__(self):
         return f"{self.player1.username} vs {self.player2.username} - {self.played_at}"
+    
+    @property
+    def player1_result(self):
+        """Return result for player1: 'win', 'loss', or 'draw'"""
+        if self.player1_score > self.player2_score:
+            return 'win'
+        elif self.player1_score < self.player2_score:
+            return 'loss'
+        else:
+            return 'draw'
+    
+    @property
+    def player2_result(self):
+        """Return result for player2: 'win', 'loss', or 'draw'"""
+        if self.player2_score > self.player1_score:
+            return 'win'
+        elif self.player2_score < self.player1_score:
+            return 'loss'
+        else:
+            return 'draw'
