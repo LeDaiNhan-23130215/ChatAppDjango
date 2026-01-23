@@ -1,58 +1,88 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
+    <meta charset="UTF-8">
     <title>TOEIC Entrance Test</title>
-    {% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
-    <h1>Bài kiểm tra đầu vào TOEIC</h1>
 
-    <p>
-        Vui lòng chọn <strong>một đáp án đúng nhất</strong> cho mỗi câu hỏi.
-        Kết quả sẽ được dùng để đánh giá trình độ TOEIC hiện tại của bạn.
-    </p>
+<div class="container exam-container">
 
-    <form method="post">
+    <!-- HEADER -->
+    <div class="exam-header fade-in">
+        <h1>📝 TOEIC Entrance Test</h1>
+        <p>
+            Vui lòng chọn <strong>một đáp án đúng nhất</strong> cho mỗi câu hỏi.<br>
+            Kết quả sẽ được dùng để <strong>đánh giá trình độ TOEIC hiện tại</strong> của bạn.
+        </p>
+    </div>
+
+    <!-- FORM -->
+    <form method="post" class="exam-form">
         {% csrf_token %}
 
         {% for question in questions %}
+
             {% ifchanged question.passage %}
                 {% if question.passage %}
-                    <div class="passage-box">
-                        <strong>Passage:</strong>
+                    <div class="passage-box fade-in">
+                        <strong>📘 Passage</strong>
                         <p>{{ question.passage|linebreaksbr }}</p>
                     </div>
                 {% endif %}
             {% endifchanged %}
 
+            <!-- IMAGE -->
             {% if question.image and question.image.image %}
-                <img src="{{ question.image.image.url }}" width="300px">
+                <div class="question-image">
+                    <img src="{{ question.image.image.url }}" alt="Question image">
+                </div>
             {% endif %}
 
-            <div class="question-block">
-                <p>
-                    <strong>
-                        Câu {{ forloop.counter }} ({{ question.get_part_display }}):
-                    </strong>
+            <!-- QUESTION -->
+            <div class="question-card fade-in">
+
+                <div class="question-header">
+                    <span class="question-number">
+                        Câu {{ forloop.counter }}
+                    </span>
+                    <span class="question-part">
+                        {{ question.get_part_display }}
+                    </span>
+                </div>
+
+                <p class="question-content">
+                    {{ question.content }}
                 </p>
 
-                <p>{{ question.content }}</p>
+                <div class="choices">
+                    {% for choice in question.choices.all %}
+                        <label class="choice-item">
+                            <input type="radio"
+                                   name="q{{ question.id }}"
+                                   value="{{ choice.id }}"
+                                   required>
+                            <span>{{ choice.content }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
 
-                {% for choice in question.choices.all %}
-                    <label>
-                        <input type="radio"
-                               name="q{{ question.id }}"
-                               value="{{ choice.id }}"
-                               required>
-                        {{ choice.content }}
-                    </label><br>
-                {% endfor %}
             </div>
-            <hr>
+
         {% endfor %}
 
-        <button type="submit">Nộp bài</button>
+        <!-- SUBMIT -->
+        <div class="submit-area">
+            <button type="submit" class="submit-btn">
+                Nộp bài Entrance Test
+            </button>
+        </div>
+
     </form>
+
+</div>
+
 </body>
 </html>

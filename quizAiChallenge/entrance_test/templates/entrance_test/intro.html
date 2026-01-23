@@ -1,27 +1,42 @@
 {% load static %}
-<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
+    <meta charset="UTF-8">
     <title>Entrance Test</title>
-    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/entrance_intro.css' %}">
 </head>
 <body>
-    <h1>Entrance Test</h1>
 
-    <p>
-        Bài kiểm tra này giúp chúng tôi đánh giá trình độ hiện tại của bạn
-        và xây dựng lộ trình học tập phù hợp nhất.
-    </p>
+<div class="container">
 
-    <ul>
-        <li>Thời gian: ~20 phút</li>
-        <li>Số câu hỏi: {{questions_count}}</li>
-        <li>Không giới hạn số lần làm</li>
-    </ul>
+    <div class="intro-card fade-in">
 
-    <form method="get" action="{% url 'entrance_test:entrance-test' %}">
-        <button type="submit">Bắt đầu làm bài</button>
-    </form>
+        <div class="icon">🧭</div>
+
+        <h1>Entrance Test</h1>
+
+        <p class="description">
+            Bài kiểm tra đầu vào giúp chúng tôi
+            <strong>đánh giá chính xác trình độ hiện tại</strong>
+            và xây dựng <strong>lộ trình học tập phù hợp nhất</strong> cho bạn.
+        </p>
+
+        <ul class="info-list">
+            <li>⏱ Thời gian: <strong>~20 phút</strong></li>
+            <li>❓ Số câu hỏi: <strong>{{ questions_count }}</strong></li>
+            <li>🔁 Không giới hạn số lần làm</li>
+        </ul>
+
+        <form method="get" action="{% url 'entrance_test:entrance-test' %}">
+            <button type="submit" class="start-btn">
+                🚀 Bắt đầu làm bài
+            </button>
+        </form>
+
+    </div>
+
+</div>
+
 </body>
 </html>

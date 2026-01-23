@@ -220,6 +220,10 @@ body {
     margin-top: 10px;
 }
 
+.mini-games-grid a {
+    text-decoration: none;
+}
+
 .game-card {
     background-color: white;
     padding: 25px;

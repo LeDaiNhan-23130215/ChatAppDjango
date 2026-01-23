@@ -3,26 +3,60 @@
 {% block title %}Quiz Lobby{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>Quiz 1v1</h1>
-    
-    <div class="quiz-actions">
-        <a href="{% url 'quiz:create_room' %}" class="btn btn-primary">Tạo Phòng</a>
-        <a href="{% url 'quiz:join_room' %}" class="btn btn-secondary">Tham Gia Phòng</a>
+<div class="container py-5">
+
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="fw-bold">⚔️ Quiz 1v1</h1>
+        <p class="text-muted">Tạo phòng hoặc tham gia để bắt đầu thử thách</p>
     </div>
-    
+
+    <!-- Main Actions -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-4 mb-3">
+            <a href="{% url 'quiz:create_room' %}" class="btn btn-primary btn-lg w-100">
+                🚀 Tạo Phòng
+            </a>
+        </div>
+        <div class="col-md-4 mb-3">
+            <a href="{% url 'quiz:join_room' %}" class="btn btn-outline-secondary btn-lg w-100">
+                🔑 Tham Gia Phòng
+            </a>
+        </div>
+    </div>
+
+    <!-- Available Rooms -->
     {% if rooms %}
     <div class="available-rooms">
-        <h2>Các Phòng Đang Chờ</h2>
-        <ul>
-        {% for room in rooms %}
-            <li>
-                <a href="{% url 'quiz:quiz_room' code=room.code %}">Phòng {{ room.code }}</a>
-                - Người chơi: {{ room.player_count }}/2
-            </li>
-        {% endfor %}
-        </ul>
+        <h4 class="mb-3">🟢 Phòng Đang Chờ</h4>
+
+        <div class="row">
+            {% for room in rooms %}
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div>
+                            <h5 class="card-title">Phòng {{ room.code }}</h5>
+                            <p class="card-text text-muted mb-3">
+                                Người chơi: {{ room.player_count }}/2
+                            </p>
+                        </div>
+
+                        <a href="{% url 'quiz:quiz_room' code=room.code %}"
+                           class="btn btn-success w-100">
+                            ⚔️ Vào Phòng
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
+    {% else %}
+        <p class="text-center text-muted">
+            Hiện chưa có phòng nào. Hãy tạo phòng mới! 🚀
+        </p>
     {% endif %}
+
 </div>
 {% endblock %}

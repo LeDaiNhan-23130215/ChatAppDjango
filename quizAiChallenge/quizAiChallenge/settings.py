@@ -158,3 +158,5 @@ AI_WORKER_URL = "https://nonelliptic-dewily-carlos.ngrok-free.dev"
 
 # Token để xác thực worker (phải giống bên Colab)
 AI_WORKER_TOKEN = "38bnDJIXRQfPlA0mgCWUksNRPRV_49ott2Dud69FqNoVeq21"
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

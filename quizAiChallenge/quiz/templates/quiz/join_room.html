@@ -3,27 +3,58 @@
 {% block title %}Tham Gia Phòng Quiz{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>Tham Gia Phòng Quiz</h1>
-    
-    <form method="POST">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="code">Nhập Mã Phòng:</label>
-            <input 
-                type="text" 
-                id="code" 
-                name="code" 
-                placeholder="VD: ABC123" 
-                maxlength="6" 
-                required
-            >
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+
+    <div class="card shadow-sm p-4" style="max-width: 420px; width: 100%;">
+        
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <h2 class="fw-bold">🔑 Tham Gia Phòng Quiz</h2>
+            <p class="text-muted mb-0">
+                Nhập mã phòng để bắt đầu trận đấu 1v1
+            </p>
         </div>
-        <div class="form-group">
-            <button type="submit" class="btn btn-primary">Tham Gia Phòng</button>
+
+        <!-- Form -->
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="code" class="form-label fw-semibold">
+                    Mã Phòng
+                </label>
+
+                <input 
+                    type="text"
+                    class="form-control form-control-lg text-center"
+                    id="code"
+                    name="code"
+                    placeholder="ZESD22"
+                    maxlength="6"
+                    required
+                    autofocus
+                    style="letter-spacing: 3px;"
+                >
+
+                <div class="form-text text-center">
+                    Mã gồm 6 ký tự do người tạo phòng cung cấp
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    ⚔️ Tham Gia Phòng
+                </button>
+            </div>
+        </form>
+
+        <!-- Back -->
+        <div class="text-center mt-4">
+            <a href="{% url 'quiz:lobby' %}" class="text-decoration-none">
+                ← Quay lại Lobby
+            </a>
         </div>
-    </form>
-    
-    <p><a href="{% url 'quiz:lobby' %}">Quay lại Lobby</a></p>
+
+    </div>
 </div>
 {% endblock %}

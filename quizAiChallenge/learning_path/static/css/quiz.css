@@ -1,0 +1,154 @@
+/* ===== RESET ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ===== BASE ===== */
+body {
+    font-family: "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #f4f7fb, #e9eff5);
+    color: #2c3e50;
+}
+
+.container {
+    max-width: 950px;
+    margin: auto;
+    padding: 40px 20px;
+}
+
+/* ===== BACK ===== */
+.back-link {
+    display: inline-block;
+    margin-bottom: 25px;
+    font-weight: bold;
+    color: #3498db;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+/* ===== CARD ===== */
+.quiz-card {
+    background: white;
+    padding: 40px 45px;
+    border-radius: 18px;
+    box-shadow: 0 14px 35px rgba(0,0,0,0.08);
+    animation: fadeInUp 0.6s ease;
+}
+
+/* ===== BADGE ===== */
+.badge {
+    display: inline-block;
+    padding: 6px 18px;
+    background: #e3f2fd;
+    color: #2980b9;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin-bottom: 18px;
+}
+
+/* ===== TEXT ===== */
+h1 {
+    font-size: 2.2rem;
+    margin-bottom: 8px;
+}
+
+.meta {
+    color: #7f8c8d;
+    margin-bottom: 30px;
+}
+
+hr {
+    border: none;
+    height: 1px;
+    background: #ecf0f1;
+    margin: 35px 0;
+}
+
+/* ===== QUESTION ===== */
+.question-box {
+    background: #f9fbfd;
+    border-radius: 14px;
+    padding: 25px 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.04);
+}
+
+.question-box h3 {
+    color: #3498db;
+    margin-bottom: 10px;
+}
+
+.question-content {
+    margin-bottom: 18px;
+    font-size: 1.05rem;
+}
+
+/* ===== CHOICES ===== */
+.choices {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.choice {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-radius: 10px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.choice:hover {
+    background: #eef6fd;
+    border-color: #3498db;
+}
+
+.choice input {
+    accent-color: #3498db;
+    transform: scale(1.1);
+}
+
+/* ===== SUBMIT ===== */
+.submit-area {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.submit-btn {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    border: none;
+    padding: 14px 55px;
+    border-radius: 50px;
+    font-size: 1.05rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+    transform: scale(1.07);
+    box-shadow: 0 10px 25px rgba(52, 152, 219, 0.4);
+}
+
+/* ===== ANIMATION ===== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
