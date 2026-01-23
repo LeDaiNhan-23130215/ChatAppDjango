@@ -19,10 +19,10 @@ class GPTAI(BaseAI):
 
         # Map độ khó -> temperature
         difficulty_map = {
-            "easy": 1.0,      # nhiều ngẫu nhiên, dễ sai
-            "medium": 0.7,    # cân bằng
-            "hard": 0.3,      # ít ngẫu nhiên, chính xác hơn
-            "expert": 0.0,    # gần như luôn đúng
+            "easy": 0.0,      # nhiều ngẫu nhiên, dễ sai
+            "medium": 0.3,    # cân bằng
+            "hard": 0.7,      # ít ngẫu nhiên, chính xác hơn
+            "expert": 1.0,    # gần như luôn đúng
         }
         temperature = difficulty_map.get(self.difficulty, 0.7)
 
