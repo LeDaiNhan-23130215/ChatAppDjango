@@ -20,7 +20,8 @@ def start_match(request):
         )
 
         # Lấy 5 câu hỏi đầu tiên (hoặc random nếu muốn)
-        questions = Question.objects.all()[:5]
+        questions = Question.objects.order_by('?')[:5]
+
 
         for q in questions:
             Round.objects.create(
